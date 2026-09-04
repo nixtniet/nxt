@@ -1,0 +1,5 @@
+include bin/clean
+include bin/nixt
+include bin/nixtd
+recursive-include docs *
+recursive-include examples *.py

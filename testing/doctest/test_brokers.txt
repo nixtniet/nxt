@@ -1,0 +1,21 @@
+# This file is placed in the Public Domain.
+# doctest: +ELLIPSIS
+
+
+"brokers"
+
+
+# test adding on object to the broker
+
+
+>>> from nxt.defines import Broker, Object
+>>> b = Broker()
+>>> o = Object()
+>>> repr(o) # doctest: +ELLIPSIS
+'<nxt.objects.Object object at ...'
+>>> id = b.add(o)
+>>> print(id) # doctest: +ELLIPSIS
+<nxt.objects.Object object at ...>
+>>> obj = b.get(id)
+>>> repr(obj) == id
+True
