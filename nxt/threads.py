@@ -82,49 +82,47 @@ class Engine:
             _thread.interrupt_main()
 
 
-class Output:
+class Repeater:
 
-    def __init__(self):
-        self.oqueue = queue.Queue()
-        self.ostopped = threading.Event()
+    counter = 0
+    running = threading.Event()
+    stopped = threading.Event()
+    todo = {}
 
-    def display(self, event):
-        "do actual display."
+    @classmethod
+    def add(cls, sleep, func, *args, **kwargs):
+        "add a repeater."
+        if not cls.running.is_set():
+            cls.start()
+        sleep = str(sleep)
+        if sleep not in cls.todo:
+            cls.todo[sleep] = []
+        cls.todo[sleep].append((func, args, kwargs))
 
-    def output(self):
-        "output loop."
-        while not self.ostopped.is_set():
-            try:
-                event = self.oqueue.get()
-            except (KeyboardInterrupt, EOFError):
-                _thread.interrupt_main()
-            if event is None:
-                self.oqueue.task_done()
-                break
-            self.display(event)
-            self.oqueue.task_done()
+    @classmethod
+    def loop(cls):
+        "repeater loop."
+        while not cls.stopped.is_set():
+            time.sleep(1.0)
+            cls.counter += 1
+            for sleep in cls.todo:
+                slept = float(sleep)
+                if cls.counter % slept != 0:
+                    continue
+                for func, args, kwargs in cls.todo[sleep]:
+                    Thread.launch(func, *args, **kwargs)
 
-    def raw(self, text):
-        "raw output."
-        raise NotImplementedError
+    @classmethod
+    def start(cls):
+        "start repeater loop."
+        cls.running.set()
+        cls.stopped.clear()
+        Thread.launch(cls.loop, name="Repeater.loop")
 
-    def start(self, daemon=True):
-        "start output loop."
-        self.ostopped.clear()
-        Thread.launch(self.output, daemon=daemon)
-
-    def stop(self):
-        "stop output loop."
-        self.ostopped.set()
-        self.oqueue.put(None)
-
-    def wait(self):
-        "wait for output to finish."
-        try:
-            self.oqueue.join()
-        except Exception as ex:
-            logging.exception(ex)
-            _thread.interrupt_main()
+    @classmethod
+    def stop(cls):
+        "stop repeater loop."
+        cls.stopped.set()
 
 
 class Task(threading.Thread):
@@ -256,7 +254,7 @@ class Watcher:
 def __dir__():
     return (
         'Engine',
-        'Output',
+        'Repeater',
         'Task',
         'Thread',
         'Watcher'

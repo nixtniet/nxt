@@ -5,7 +5,12 @@
 
 
 import inspect
+import hashlib
 import os
+
+
+d = os.path.dirname
+j = os.path.join
 
 
 class MisMatch(Exception):
@@ -42,7 +47,7 @@ class Mods:
                 continue
             if mod:
                 return mod
-            fnm = os.path.join(path, name + ".py")
+            fnm = j(path, name + ".py")
             if not os.path.exists(fnm):
                 continue
             return cls.importer(modname, fnm)
@@ -92,12 +97,12 @@ class Mods:
     @classmethod
     def minimal(cls):
         "return package minimal path."
-        return os.path.join(cls.where(Mods), "minimal")
+        return j(cls.where(Mods), "minimal")
 
     @classmethod
     def moddir(cls):
         "return package modules path."
-        return os.path.join(cls.where(Mods), "modules")
+        return j(cls.where(Mods), "modules")
 
     @classmethod
     def source(cls, mod):
@@ -154,7 +159,7 @@ class MD5:
             if pth.startswith("__") or not pth.endswith(".py") or "statics" in pth:
                 continue
             name = pth[:-3]
-            modpath = os.path.join(path, pth)
+            modpath = j(path, pth)
             if md5s and cls.md5(modpath) != md5s.get(name):
                 ok = False
         return ok
@@ -174,7 +179,7 @@ class MD5:
             if pth.startswith("__") or not pth.endswith(".py") or "statics" in pth:
                 continue
             name = pth[:-3]
-            data[name] = cls.md5(os.path.join(path, pth))
+            data[name] = cls.md5(j(path, pth))
 
     @classmethod
     def dir(cls, path, md5):
@@ -182,9 +187,16 @@ class MD5:
         for fnm in os.listdir(path):
             if not fnm.endswith(".py"):
                 continue
-            mpath = os.path.join(path, fnm)
+            mpath = j(path, fnm)
             with open(mpath, "r", encoding="utf-8") as file:
                 md5.update(file.read().encode("utf-8"))
+
+    @classmethod
+    def md5s(cls, path):
+        path = d(__file__)
+        md5 = hashlib.md5()
+        cls.dir(path, md5)
+        return md5.hexdigest()[:7]
 
     @classmethod
     def md5(cls, path):

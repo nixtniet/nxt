@@ -13,8 +13,7 @@ import time
 
 
 from .encoder import JSON
-from .methods import Method
-from .objects import Data
+from .objects import Data, Method
 from .utility import Utils
 
 
