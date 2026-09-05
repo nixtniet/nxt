@@ -9,7 +9,7 @@ import urllib.parse
 import urllib.request
 
 
-from .objects import Data. Method
+from .objects import Data, Method
 
 
 class Fetcher:
@@ -63,7 +63,7 @@ class Fetcher:
             return response
 
     @classmethod
-    def useragent(txt):
+    def useragent(cls, txt):
         "produce useragent string."
         return "Mozilla/5.0 (X11; Linux x86_64) " + txt
 

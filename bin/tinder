@@ -7,7 +7,6 @@
 
 import logging
 import os
-import shutil
 import sys
 import threading
 import time
@@ -17,8 +16,8 @@ import _thread
 sys.path.insert(0, os.getcwd())
 
 
-from nxt.defines import Client, Commands, Main, Message
-from nxt.defines import Method, Mods, Parser, Time
+from nxt.defines import Client, Clients, Commands, Main, Message, Pool
+from nxt.defines import MD5, Method, Mods, Parser, Task, Time
 
 
 class Kernel:
@@ -27,12 +26,42 @@ class Kernel:
     starttime = 0
 
     @classmethod
+    def banner(cls, force=False):
+        "hello."
+        if not force and not Main.verbose:
+            return
+        tmr = time.ctime(time.time()).replace("  ", " ")
+        txt = "%s since %s %s (%s)" % (
+            Main.name.upper(),
+            tmr,
+            Main.level.upper() or "WARNING",
+            MD5.core()
+        )
+        print(txt.replace("  ", " "))
+        sys.stdout.flush()
+
+    @classmethod
     def boot(cls):
         Parser.parse(Main, " ".join(sys.argv[1:]))
-        Mods.dir("mods", "mods")
+        if "v" in Main.opts:
+            Main.verbose = True
+        print(Main)
         Mods.dir(Mods.moddir())
-        Commands.scanner()
-        
+        Mods.dir("mods", "mods")
+        if Main.verbose:
+            print("yo!")
+            cls.banner()
+            Commands.scanner()
+
+    @classmethod
+    def shutdown(cls):
+        "call stop on clients."
+        Clients.shutdown()
+        while True:
+            if len(threading.enumerate()) == 1:
+                break
+            time.sleep(0.1)
+
     @classmethod
     def wrap(cls, func, *args, dofinal=None):
         "restore console."
@@ -74,38 +103,7 @@ class CLI(Client):
             sys.stdout.flush()
 
 
-class Runners:
-
-    runners = []
-    lock = threading.RLock()
-    nrcpu = 1
-    nrlast = 0
-
-    @staticmethod
-    def add(client):
-        "add a runner."
-        Runners.runners.append(client)
-
-    @staticmethod
-    def init(nrcpu, cls):
-        "initialize a runner."
-        Runners.nrcpu = nrcpu
-        for _x in range(Runners.nrcpu):
-            clt = cls()
-            clt.start()
-            Runners.add(clt)
-
-    @staticmethod
-    def put(*args):
-        "push job to a runner."
-        if not Runners.runners:
-            Runners.init(Runners.nrcpu, CLI)
-        with Runners.lock:
-            if Runners.nrlast >= Runners.nrcpu-1:
-                Runners.nrlast = 0
-            clt = Runners.runners[Runners.nrlast]
-            clt.put(*args)
-            Runners.nrlast += 1
+pool = Pool(Client)
 
 
 def payload(todo):
@@ -115,7 +113,7 @@ def payload(todo):
             evt = Message()
             evt.kind = "command"
             evt.text = f"{cmd} {ex}"
-            Runners.put(evt)
+            pool.put(evt)
 
 
 def final():
@@ -137,8 +135,8 @@ def main():
         nrcpu = os.cpu_count()
     else:
         nrcpu = 1
-    Runners.init(nrcpu, CLI)
     Kernel.starttime = time.time()
+    pool.init(nrcpu)
     nrs = Main.index or 1
     for _x in range(nrs):
         payload(pre)
@@ -146,6 +144,7 @@ def main():
         payload(examples)
     for _x in range(nrs):
         payload(post)
+    Kernel.shutdown()
 
 
 examples = {

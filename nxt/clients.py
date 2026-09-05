@@ -5,10 +5,7 @@
 
 
 import gc
-import logging
-import queue
 import threading
-import _thread
 import time
 
 

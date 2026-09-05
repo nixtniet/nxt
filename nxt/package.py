@@ -100,9 +100,9 @@ class Mods:
         return os.path.join(cls.where(Mods), "modules")
 
     @classmethod
-    def source(module):
+    def source(cls, mod):
         "return the source of a module."
-        return module.__loader__.get_source(module.__name__)
+        return mod.__loader__.get_source(mod.__name__)
 
     @classmethod
     def spl(cls, txt, ignore=""):
@@ -202,7 +202,6 @@ class MD5:
         md5 = hashlib.md5()
         md5.update(src.encode("utf-8"))
         return str(md5.hexdigest())
-
 
 
 def __dir__():

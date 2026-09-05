@@ -45,7 +45,7 @@ class Runner:
         self.queue.put(None)
 
 
-class Runners:
+class Pool:
 
     def __init__(self, clazz=None):
         self.clazz = clazz or Runner()
@@ -84,6 +84,6 @@ class Runners:
 
 def __dir__():
     return (
-        'Runner',
-        'Runners'
+        'Pool',
+        'Runner'
     )

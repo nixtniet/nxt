@@ -226,6 +226,11 @@ class Method:
                 setattr(obj, key, value)
 
     @classmethod
+    def pkgname(cls, obj):
+        "return package name of an object."
+        return obj.__module__.split(".", maxsplit=1)[0]
+
+    @classmethod
     def pop(cls, obj, key, default=None):
         "remove key from object and return it's value. return default or KeyError."
         return obj.__dict__.pop(key, default)
@@ -367,7 +372,8 @@ class Parser:
         nr = -1
         for spli in text.split():
             if spli.startswith("--"):
-                obj.opts += f",{spli[2:]}"
+                name = spli[2:]
+                setattr(obj, name, True)
                 continue
             if spli.startswith("-"):
                 try:
