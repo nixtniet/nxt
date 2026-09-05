@@ -1,0 +1,289 @@
+#!/usr/bin/env python3
+# This file is placed in the Public Domain.
+
+
+"background processes"
+
+
+import argparse
+import logging
+import os
+import sys
+import time
+import _thread
+
+
+sys.path.insert(0, os.getcwd())
+
+
+from nxt.defines import Client, Commands, Logging, Main, MD5, Message
+from nxt.defines import Mods, Method, Parser, Thread, Utils, Workdir
+
+
+NAME = "nixt"
+
+
+class Cmd:
+
+    @staticmethod
+    def cmd(event):
+        "show commands."
+        check = len(Commands.cmds) > len(Commands.names)
+        event.reply(",".join(sorted((check and Commands.cmds) or Commands.names)))
+
+
+class Daemon:
+
+    @classmethod
+    def daemon(cls):
+        "run in the background."
+        pid = os.fork()
+        if pid != 0:
+            os._exit(0)
+        os.setsid()
+        pid2 = os.fork()
+        if pid2 != 0:
+            os._exit(0)
+        if not Main.sets.verbose:
+            cls.null(sys.stdin)
+            cls.null(sys.stdout)
+            cls.null(sys.stderr)
+        os.umask(0o077)
+        os.chdir("/")
+        os.nice(10)
+
+    @classmethod
+    def null(cls, io):
+        "route to dev/null."
+        with open('/dev/null', 'r', encoding="utf-8") as sis:
+            os.dup2(sis.fileno(), io.fileno())
+
+    @classmethod
+    def pid(cls):
+        return Workdir.pid(Main.name)
+
+    @classmethod
+    def privileges(cls):
+        "drop privileges."
+        import getpass
+        import pwd
+        pwnam2 = pwd.getpwnam(getpass.getuser())
+        os.setgid(pwnam2.pw_gid)
+        os.setuid(pwnam2.pw_uid)
+
+
+class Kernel(Daemon):
+
+    md5s = {}
+
+    @classmethod
+    def banner(cls, force=False):
+        "hello."
+        if not force and not Main.verbose:
+            return
+        tmr = time.ctime(time.time()).replace("  ", " ")
+        txt = "%s since %s %s (%s)" % (
+            Main.name.upper(),
+            tmr,
+            Main.level.upper() or "WARNING",
+            MD5.md5s(Utils.where(Client))
+        )
+        print(txt.replace("  ", " "))
+        sys.stdout.flush()
+
+    @classmethod
+    def boot(cls):
+        Parser.parse(Main, " ".join(sys.argv[1:]))
+        Method.update(Main, Main.sets)
+        Main.name = NAME
+        Workdir.wdr = Main.wdr or Workdir.wdr or Workdir.home(Main.name)
+        if not Main.nodisk:
+            Workdir.skel()
+        Logging.size(len(Main.name))
+        Logging.level(Main.level or "warning")
+        MD5.createmd5(Utils.where(Client), cls.md5s)
+        Mods.dir(Workdir.moddir())
+        Mods.dir(Mods.moddir())
+        if Main.local:
+            Mods.dir("mods", "mods")
+        Mods.dir(Main.path)
+        if Main.all:
+            Main.mods = ",".join(Mods.list())
+        if Main.verbose:
+            cls.banner()
+        Commands.scanner()
+
+    @classmethod
+    def forever(cls):
+        "run forever until ctrl-c."
+        while True:
+            try:
+                time.sleep(0.1)
+            except (KeyboardInterrupt, EOFError):
+                break
+
+    @classmethod
+    def init(cls, names, wait=False):
+        "call init of modules that have an init function."
+        thrs = []
+        for name in Utils.spl(names):
+            mod = Mods.get(name)
+            if not mod or "init" not in dir(mod):
+                continue
+            thrs.append(Thread.launch(mod.init))
+        if thrs and wait:
+            for thr in thrs:
+                try:
+                    thr.join()
+                except (KeyboardInterrupt, EOFError):
+                    _thread.interrupt_main()
+        return True
+
+    @classmethod
+    def shutdown(cls):
+        "call stop on clients."
+        Clients.shutdown()
+        while True:
+            if len(threading.enumerate()) == 1:
+                break
+            time.sleep(0.1)
+
+
+    @classmethod
+    def wrap(cls, func, *args, dofinal=None):
+        "restore console."
+        import termios
+        try:
+            old = termios.tcgetattr(sys.stdin.fileno())
+        except termios.error:
+            old = False
+        try:
+            cls.wrapped(func, *args)
+        except (KeyboardInterrupt, EOFError):
+            pass
+        if old:
+            termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, old)
+        if dofinal:
+            dofinal()
+
+    @classmethod
+    def wrapped(cls, func, *args):
+        "wrap function in a try/except, silence ctrl-c/ctrl-d."
+        try:
+            func(*args)
+        except (KeyboardInterrupt, EOFError):
+            Client.block.set()
+            Task.block.set()
+            _thread.interrupt_main()
+        except Exception as ex:
+            logging.exception(ex)
+            _thread.interrupt_main()
+
+
+class CLI(Client):
+
+    def __init__(self):
+        Client.__init__(self)
+        self.register("command", Commands.command)
+
+    def after(self, event):
+        "wait for event to finish"
+        event.wait()
+
+    def raw(self, text):
+        "write to console."
+        print(text.encode('utf-8', 'replace').decode("utf-8"))
+        sys.stdout.flush()
+
+
+class Console(CLI):
+
+    def __init__(self):
+        CLI.__init__(self)
+        self.silent = True
+
+    def poll(self):
+        "return event."
+        evt = Message()
+        evt.orig = repr(self)
+        evt.text = input("> ")
+        evt.kind = "command"
+        self.put(evt)
+        return evt
+
+
+class Scripts:
+
+    @staticmethod
+    def background():
+        "background script."
+        Kernel.daemon()
+        Kernel.privileges()
+        Kernel.pid()
+        Main.mods = ",".join(Mods.list())
+        Kernel.init(Main.mods)
+        Kernel.forever()
+
+    @staticmethod
+    def console():
+        "console script."
+        import readline
+        readline.redisplay()
+        Commands.add(Cmd.cmd)
+        Kernel.init(Main.mods, Main.wait)
+        csl = Console()
+        csl.start()
+        Kernel.forever()
+
+    @staticmethod
+    def control():
+        "cli script."
+        Commands.add(Cmd.cmd)
+        cli = CLI()
+        evt = Message()
+        evt.orig = repr(cli)
+        evt.text = Main.otxt
+        Commands.command(evt)
+        evt.wait()
+
+    @staticmethod
+    def nodisk():
+        Commands.add(Cmd.cmd)
+        if Main.console:
+            import readline
+            readline.redisplay()
+            csl = Console()
+            csl.start()
+        Kernel.init(Main.mods)
+        Kernel.forever()
+
+    @staticmethod
+    def service():
+        "service script."
+        Kernel.privileges()
+        Kernel.pid()
+        Commands.add(Cmd.cmd)
+        if not Main.verbose:
+            Kernel.banner(True)
+        Main.mods = ",".join(Mods.list())
+        Kernel.init(Main.mods)
+        Kernel.forever()
+
+
+def main():
+    "main"
+    Kernel.boot()
+    if Main.nodisk:
+        Kernel.wrap(Scripts.nodisk)
+    elif Main.console:
+        Kernel.wrap(Scripts.console)
+    elif Main.service:
+        Kernel.wrap(Scripts.service)
+    elif Main.daemon:
+        Kernel.wrap(Scripts.background)
+    else:
+        Kernel.wrap(Scripts.control)
+
+
+if __name__ == "__main__":
+    main()
