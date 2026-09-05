@@ -9,7 +9,7 @@ import inspect
 
 from .clients import Clients
 from .package import MisMatch, Mods
-from .parsers import Parser
+from .objects import Parser
 
 
 class Commands:

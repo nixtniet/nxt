@@ -1,1 +1,170 @@
-python3 -m nxt.runtime $* ;
+#!/usr/bin/env python3
+# This file is placed in the Public Domain.
+
+
+"background processes"
+
+
+import argparse
+import logging
+import os
+import sys
+import time
+import _thread
+
+
+sys.path.insert(0, os.getcwd())
+
+
+from nxt.defines import Client, Commands, Main, MD5, Logging
+from nxt.defines import Message, Mods, Method, Task
+
+
+class Arguments:
+
+    @classmethod
+    def getargs(cls):
+        "parse commandline arguments."
+        Main.name = Main.name or Method.pkgname(Main)
+        theparser = argparse.ArgumentParser(
+            prog=Main.name,
+            description=f'{Main.name.upper()}',
+            epilog='use "%(prog)s cmd" for a list of commands.',
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+        )
+        group = theparser.add_mutually_exclusive_group()
+        group.add_argument("-c", "--console", action="store_true", help="start a console.")
+        group.add_argument("-d", "--daemon", action="store_true", help="run as background daemon.")
+        group.add_argument("-s", "--service", action="store_true", help="run as service.")
+        parser = theparser.add_argument_group()
+        parser.add_argument("-a", "--all", action="store_true", help="load all modules.")
+        parser.add_argument("-v", "--verbose", action='store_true', help='enable verbose.')
+        parser.add_argument("-w", "--wait", action='store_true', help='wait for services to start.')
+        optionparser = theparser.add_argument_group()
+        optionparser.add_argument("-l", "--level", default="warning", help='set loglevel.', metavar="level")
+        optionparser.add_argument("-m", "--mods", default="", help='modules to load.', metavar="m1,m2")
+        optionparser.add_argument("-p", "--path", default='', help='path to modules directory.', metavar="path")
+        optparser = theparser.add_argument_group()
+        optparser.add_argument("--admin", action="store_true", help="enable admin mode.")
+        optparser.add_argument("--channel", default="", help="channel to join")
+        optparser.add_argument("--default", default="irc,mdl,rss,wsd", help=argparse.SUPPRESS)
+        optparser.add_argument("--local", action="store_true", help="user local mods dir.")
+        optparser.add_argument("--nochdir", action="store_true", help=argparse.SUPPRESS)
+        optparser.add_argument("--nodisk", action="store_true", help="memory only.")
+        optparser.add_argument("--scanner", action="store_true", help="do full modules scan on boot.")
+        optparser.add_argument("--wdr", default="", help="set modules directory.")
+        args, arguments = theparser.parse_known_args()
+        Method.update(Main, args)
+        Main.otxt = " ".join(arguments)
+
+
+class Kernel:
+
+    @classmethod
+    def banner(cls, force=False):
+        "hello."
+        if not force and not Main.verbose:
+            return
+        tmr = time.ctime(time.time()).replace("  ", " ")
+        txt = "%s since %s %s (%s)" % (
+            Main.name.upper(),
+            tmr,
+            Main.level.upper() or "WARNING",
+            MD5.core()
+        )
+        print(txt.replace("  ", " "))
+        sys.stdout.flush()
+
+    @classmethod
+    def boot(cls):
+        Logging.size(len(Main.name))
+        Logging.level(Main.level or "warning")
+        Mods.dir(Main.path)
+        Mods.dir(Mods.moddir())
+        if Main.local:
+            Mods.dir("mods", "mods")
+        if Main.all:
+            Main.mods = ",".join(Mods.list())
+        Commands.scanner()
+        if Main.scanner or Main.local:
+            Commands.scanner()
+
+    @classmethod
+    def wrap(cls, func, *args, dofinal=None):
+        "restore console."
+        import termios
+        try:
+            old = termios.tcgetattr(sys.stdin.fileno())
+        except termios.error:
+            old = False
+        try:
+            cls.wrapped(func, *args)
+        except (KeyboardInterrupt, EOFError):
+            pass
+        if old:
+            termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, old)
+        if dofinal:
+            dofinal()
+
+    @classmethod
+    def wrapped(cls, func, *args):
+        "wrap function in a try/except, silence ctrl-c/ctrl-d."
+        try:
+            func(*args)
+        except (KeyboardInterrupt, EOFError):
+            Client.block.set()
+            Task.block.set()
+            _thread.interrupt_main()
+        except Exception as ex:
+            logging.exception(ex)
+            _thread.interrupt_main()
+
+
+class CLI(Client):
+
+    def __init__(self):
+        Client.__init__(self)
+        self.register("command", Commands.command)
+
+    def after(self, event):
+        "wait for event to finish"
+        event.wait()
+
+    def raw(self, text):
+        "write to console."
+        print(text.encode('utf-8', 'replace').decode("utf-8"))
+        sys.stdout.flush()
+
+
+class Cmd:
+
+    @staticmethod
+    def cmd(event):
+        "show commands."
+        check = len(Commands.cmds) > len(Commands.names)
+        event.reply(",".join(sorted((check and Commands.cmds) or Commands.names)))
+
+
+class Scripts:
+
+    @staticmethod
+    def control():
+        "cli script."
+        Kernel.boot()
+        Commands.add(Cmd.cmd)
+        cli = CLI()
+        evt = Message()
+        evt.orig = repr(cli)
+        evt.text = Main.otxt
+        Commands.command(evt)
+        evt.wait()
+
+
+def main():
+    "main"
+    Arguments.getargs()
+    Kernel.wrap(Scripts.control)
+
+
+if __name__ == "__main__":
+    main()
