@@ -21,8 +21,8 @@ from nxt.defines import Message, Mods, Method, Thread
 def init():
     "initialize irc module."
     irc = IRC()
-    irc.start()
     try:
+        irc.start()
         irc.events.joined.wait(60.0)
     except (KeyboardInterrupt, EOFError):
         _thread.interrupt_main()

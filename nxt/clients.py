@@ -12,6 +12,7 @@ import time
 import _thread
 
 
+from .objects import Method
 from .threads import Engine, Thread
 
 
@@ -185,16 +186,18 @@ class Clients:
     def shutdown():
         "call stop on clients."
         for client in Broker.objs("wait"):
+            logging.info("wait %s", Method.clsname(client))
             try:
                 client.wait()
             except (KeyboardInterrupt, EOFError):
-                pass
+                _thread.interrupt_main()
         time.sleep(0.01)
         for client in Broker.objs("stop"):
+            logging.info("stop %s", Method.clsname(client))
             try:
                 client.stop()
             except (KeyboardInterrupt, EOFError):
-                pass
+                _thread.interrupt_main()
         time.sleep(0.01)
 
 

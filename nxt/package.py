@@ -104,6 +104,17 @@ class Mods:
         return j(cls.where(Mods), "modules")
 
     @classmethod
+    def shutdown(cls):
+        print(cls.mods)
+        for mod in cls.mods.values():
+            if not getattr(mod, "shutdown", False):
+                continue
+            try:
+                mod.shutdown()
+            except (KeyboardInterrupt, EOFError):
+                _thread.interrupt_main()
+
+    @classmethod
     def source(cls, mod):
         "return the source of a module."
         return mod.__loader__.get_source(mod.__name__)

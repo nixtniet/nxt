@@ -17,10 +17,9 @@ b = os.path.basename
 e = os.path.exists
 
 
-class Engine:
+class Loop:
 
     def __init__(self):
-        self.cbs = {}
         self.queue = queue.Queue()
         self.stopped = threading.Event()
         self.done = threading.Event()
@@ -28,14 +27,8 @@ class Engine:
     def after(self, event):
         "called after callback."
 
-    def callback(self, event):
-        "run callback function with event."
-        func = self.cbs.get(event.kind, None)
-        if not func:
-            event.ready()
-            return
-        name = event.text and event.text.split()[0]
-        event._thr = Thread.launch(func, event, name=name)
+    def handle(self, event):
+        "handle event."
 
     def loop(self):
         "callback loop."
@@ -46,7 +39,7 @@ class Engine:
                 self.queue.task_done()
                 break
             event.orig = repr(self)
-            self.callback(event)
+            self.handle(event)
             self.after(event)
             self.queue.task_done()
         self.done.set()
@@ -57,10 +50,6 @@ class Engine:
     def put(self, event):
         "put event on queue."
         self.queue.put(event)
-
-    def register(self, kind, callback):
-        "register callback."
-        self.cbs[kind] = callback
 
     def start(self, daemon=True):
         "start callback loop."
@@ -82,102 +71,96 @@ class Engine:
             _thread.interrupt_main()
 
 
-class Repeater:
+class Engine(Loop):
+
+    def __init__(self):
+        Loop.__init__(self)
+        self.cbs = {}
+        self.queue = queue.Queue()
+        self.stopped = threading.Event()
+        self.done = threading.Event()
+
+    def handle(self, event):
+        "run callback function with event."
+        func = self.cbs.get(event.kind, None)
+        if not func:
+            event.ready()
+            return
+        name = event.text and event.text.split()[0]
+        event._thr = Thread.launch(func, event, name=name)
+
+    def register(self, kind, callback):
+        "register callback."
+        self.cbs[kind] = callback
+
+
+class Repeater(Loop):
 
     counter = 0
     running = threading.Event()
     stopped = threading.Event()
     todo = {}
 
-    @classmethod
-    def add(cls, sleep, func, *args, **kwargs):
-        "add a repeater."
-        if not cls.running.is_set():
-            cls.start()
-        sleep = str(sleep)
-        if sleep not in cls.todo:
-            cls.todo[sleep] = []
-        cls.todo[sleep].append((func, args, kwargs))
+    def __init__(self):
+        Loop.__init__(self)
 
-    @classmethod
-    def loop(cls):
+    def add(self, sleep, func, *args, **kwargs):
+        "add a repeater."
+        if not self.running.is_set():
+            self.start()
+        sleep = str(sleep)
+        if sleep not in self.todo:
+            self.todo[sleep] = []
+        self.todo[sleep].append((func, args, kwargs))
+
+    def loop(self):
         "repeater loop."
-        while not cls.stopped.is_set():
+        while not self.stopped.is_set():
             time.sleep(1.0)
-            cls.counter += 1
-            for sleep in cls.todo:
+            self.counter += 1
+            for sleep in self.todo:
                 slept = float(sleep)
-                if cls.counter % slept != 0:
+                if self.counter % slept != 0:
                     continue
-                for func, args, kwargs in cls.todo[sleep]:
+                for func, args, kwargs in self.todo[sleep]:
                     Thread.launch(func, *args, **kwargs)
 
-    @classmethod
-    def start(cls):
-        "start repeater loop."
-        cls.running.set()
-        cls.stopped.clear()
-        Thread.launch(cls.loop, name="Repeater.loop")
 
-    @classmethod
-    def stop(cls):
-        "stop repeater loop."
-        cls.stopped.set()
-
-
-class Watcher:
+class Watcher(Loop):
 
     running = threading.Event()
     sleep = 1.0
     cbs = {}
     times = {}
 
-    @classmethod
-    def add(cls, path, callback):
+    def add(self, path, callback):
         "add callback"
         if not os.path.exists(path):
             return
-        cls.cbs[path] = callback
+        self.cbs[path] = callback
         
-    @classmethod
-    def callback(cls, path):
+    def callback(self, path):
         "run callback."
-        cls.cbs[path]()
+        self.cbs[path]()
 
-    @classmethod
     def init(cls, times={}):
         "read timestamps."
-        for path in cls.cbs:
+        for path in self.cbs:
             if not e(path):
                 continue
-            cls.times[path] = times.get(path, os.stat(path).st_mtime)
+            self.times[path] = times.get(path, os.stat(path).st_mtime)
             
-    @classmethod
     def loop(cls):
         "loop select."
-        while cls.running.isSet():
-            for path in cls.cbs:
+        while self.running.isSet():
+            for path in self.cbs:
                 if not e(path):
                     continue
                 mtime = os.stat(path).st_mtime
-                if mtime > cls.times[path]:
-                    cls.callback(path)
-                cls.times[path] = mtime
-            time.sleep(cls.sleep)
-
-    @classmethod
-    def start(cls, times={}):
-        "start watcher"
-        if cls.running.isSet():
-            return
-        cls.running.set()
-        cls.init(times)
-        Thread.launch(cls.loop, name="Watcher.loop")
-
-    @classmethod
-    def stop(cls):
-        "stop watcher."
-        cls.running.clear()
+                if mtime > self.times[path]:
+                    self.callback(path)
+                self.times[path] = mtime
+            time.sleep(self.sleep)
 
 
 class Task(threading.Thread):

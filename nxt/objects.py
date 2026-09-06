@@ -4,6 +4,8 @@
 "a clean namespace"
 
 
+import inspect
+import os
 import threading
 import types
 
@@ -86,6 +88,11 @@ class Method:
     def clz(cls, obj):
         "return class name of an object."
         return cls.fqn(obj).split(".")[-1]
+
+    @classmethod
+    def clsname(cls, obj):
+        "return classname of an object."
+        return obj.__class__.__name__
 
     @classmethod
     def construct(cls, obj, *args, **kwargs):
@@ -284,6 +291,14 @@ class Method:
         return res
 
     @classmethod
+    def skipped(cls, obj):
+        "yield values without underscored keys."
+        for key in dir(obj):
+            if key.startswith("_"):
+                continue
+            yield getattr(obj, key)
+
+    @classmethod
     def typed(cls, obj, key, val):
         "assign proper types."
         if not val:
@@ -342,6 +357,11 @@ class Method:
                 res.append(obj[key])
             return res
         return obj.__dict__.values()
+
+    @classmethod
+    def where(cls, obj):
+        "path where object is defined."
+        return os.path.dirname(inspect.getfile(obj))
 
 
 class Parser:

@@ -19,6 +19,7 @@ from nxt.defines import Runner, Utils, Watcher, Workdir
 
 
 logger = logging.getLogger("rss")
+repeater = Repeater()
 watcher = Watcher()
 
 
@@ -68,58 +69,6 @@ class Locks:
 
     fetchlock = _thread.allocate_lock()
     importlock = _thread.allocate_lock()
-
-
-class RSS:
-
-    "RSS parser"
-
-    @classmethod
-    def getitem(cls, line, item):
-        "return item from line."
-        lne = ""
-        index1 = line.find(f"<{item}>")
-        if index1 == -1:
-            return lne
-        index1 += len(item) + 2
-        index2 = line.find(f"</{item}>", index1)
-        if index2 == -1:
-            return lne
-        return Utils.cdata(line[index1:index2]).strip()
-
-    @classmethod
-    def getitems(cls, text, token, nrs=None):
-        "get items from text."
-        index = 0
-        end = len(text)
-        stop = False
-        nrx = -1
-        while not stop:
-            nrx += 1
-            if nrs and nrx >= nrs:
-                break
-            index1 = text.rfind(f"<{token}", index, end)
-            if index1 == -1:
-                break
-            end = index1
-            index1 += len(token) + 2
-            index2 = text.rfind(f"</{token}>", index1)
-            if index2 == -1:
-                break
-            yield text[index1:index2]
-
-    @classmethod
-    def parse(cls, txt, toke="item", items="title,link"):
-        "parse feed."
-        for line in cls.getitems(txt, toke):
-            line = line.strip()
-            obj = Data()
-            for itm in Utils.spl(items):
-                val = cls.getitem(line, itm)
-                if val:
-                    escaped = Utils.unescape(val.strip())
-                    obj[itm] = Utils.striphtml(escaped).replace("\n", "")
-            yield obj
 
 
 class Run:
@@ -206,7 +155,7 @@ class Run:
         md5 = MD5.source(txt)[:7]
         if md5 in feed.seen:
             return True
-        feed.seen.append(md5)
+        feed.seen.insert(0, md5)
         return False
 
     @classmethod
@@ -242,8 +191,8 @@ class Run:
             watcher.start()
         cls.statefn = Locater.last(State) or Disk.ident(State)
         if not once:
-            Repeater.add(Config.polltime, cls.run)
-            Repeater.add(3600, cls.clear)
+            repeater.add(Config.polltime, cls.run)
+            repeater.add(3600, cls.clear)
                 
     @classmethod
     def stop(cls):
@@ -269,10 +218,12 @@ class Fetching(Runner):
             fnm, feed, silent = args
         except ValueError:
             return counter
-        counter = 0
         if not feed.seen:
             feed.seen = []
+        has = False
+        counter = 0
         for obj in self.getfeed(fnm, feed, feed.display_list):
+            counter += 1
             if obj is None:
                 continue
             if Method.isempty(obj):
@@ -290,12 +241,10 @@ class Fetching(Runner):
                 txt = Run.display(fed)
                 if not Run.got(txt, fnm, feed):
                     Clients.announce(txt)
-            counter += 1
+                    has = True
             del obj
-        if counter:
-            if counter > int(feed.counter or "0"):
-                feed.counter = counter
-            feed.seen = feed.seen[:feed.counter]
+        if has:
+            feed.seen = feed.seen[:counter]
             Disk.write(feed, fnm)
             logging.debug("wrote %s", fnm)
         gc.collect(0)
@@ -319,6 +268,58 @@ class Fetching(Runner):
 
 
 pool = Pool(Fetching)
+
+
+class RSS:
+
+    "RSS parser"
+
+    @classmethod
+    def getitem(cls, line, item):
+        "return item from line."
+        lne = ""
+        index1 = line.find(f"<{item}>")
+        if index1 == -1:
+            return lne
+        index1 += len(item) + 2
+        index2 = line.find(f"</{item}>", index1)
+        if index2 == -1:
+            return lne
+        return Utils.cdata(line[index1:index2]).strip()
+
+    @classmethod
+    def getitems(cls, text, token, nrs=None):
+        "get items from text."
+        index = 0
+        end = len(text)
+        stop = False
+        nrx = -1
+        while not stop:
+            nrx += 1
+            if nrs and nrx >= nrs:
+                break
+            index1 = text.rfind(f"<{token}", index, end)
+            if index1 == -1:
+                break
+            end = index1
+            index1 += len(token) + 2
+            index2 = text.rfind(f"</{token}>", index1)
+            if index2 == -1:
+                break
+            yield text[index1:index2]
+
+    @classmethod
+    def parse(cls, txt, toke="item", items="title,link"):
+        "parse feed."
+        for line in cls.getitems(txt, toke):
+            line = line.strip()
+            obj = Data()
+            for itm in Utils.spl(items):
+                val = cls.getitem(line, itm)
+                if val:
+                    escaped = Utils.unescape(val.strip())
+                    obj[itm] = Utils.striphtml(escaped).replace("\n", "")
+            yield obj
 
 
 def atr(event):

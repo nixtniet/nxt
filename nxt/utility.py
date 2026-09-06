@@ -265,24 +265,6 @@ class Utils:
         return str(uuid.uuid4())[:8]
 
     @staticmethod
-    def skip(obj):
-        "skip underscored keys."
-        result = []
-        for x in dir(obj):
-            if x.startswith("_"):
-                continue
-            result.append(x)
-        return sorted(result)
-
-    @staticmethod
-    def skipped(obj):
-        "yield values without underscored keys."
-        for key in dir(obj):
-            if key.startswith("_"):
-                continue
-            yield getattr(obj, key)
-
-    @staticmethod
     def source(module):
         "return the source of a module."
         return module.__loader__.get_source(module.__name__)
@@ -323,11 +305,6 @@ class Utils:
     def useragent(txt):
         "produce useragent string."
         return "Mozilla/5.0 (X11; Linux x86_64) " + txt
-
-    @staticmethod
-    def where(obj):
-        "path where object is defined."
-        return os.path.dirname(inspect.getfile(obj))
 
 
 def __dir__():
