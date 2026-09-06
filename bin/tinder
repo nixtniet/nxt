@@ -42,6 +42,7 @@ class Kernel:
 
     @classmethod
     def boot(cls):
+        "configure."
         Parser.parse(Main, " ".join(sys.argv[1:]))
         if "v" in Main.opts:
             Main.verbose = True
@@ -103,7 +104,7 @@ class CLI(Client):
             sys.stdout.flush()
 
 
-pool = Pool(Client)
+pool = Pool(CLI)
 
 
 def payload(todo):

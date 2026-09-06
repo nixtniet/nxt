@@ -5,7 +5,6 @@
 
 
 import inspect
-import hashlib
 import os
 
 
@@ -193,6 +192,8 @@ class MD5:
 
     @classmethod
     def md5s(cls, path):
+        "return md4 of all file in a package."
+        import hashlib
         path = d(__file__)
         md5 = hashlib.md5()
         cls.dir(path, md5)

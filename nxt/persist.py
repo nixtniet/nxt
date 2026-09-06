@@ -24,7 +24,7 @@ class NoDisk(Exception):
 
 class DecodeError(Exception):
 
-    "could not parse input."
+    "could not parse data."
 
 
 class Cache:

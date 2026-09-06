@@ -43,7 +43,6 @@ def __dir__():
        'Pool',
        'Repeater',
        'Runner',
-       'Runners',
        'Task',
        'Thread',
        'Time',

@@ -59,6 +59,7 @@ class Pool:
         self.runners.append(client)
 
     def busy(self):
+        "check whether pool is busy."
         for runner in self.runners:
             if runner.queue.qsize():
                 return True

@@ -5,9 +5,11 @@
 
 
 import gc
+import logging
 import queue
 import threading
 import time
+import _thread
 
 
 from .threads import Engine, Thread
