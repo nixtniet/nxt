@@ -41,19 +41,19 @@ class TimerLoop:
     lock = RLock()
     path = ""
     running = Event()
-    timers = Timers()
+    timers = {}
 
     @classmethod
     def add(cls, tme, orig, channel,  txt):
         "add a timer."
         with cls.lock:
-            setattr(cls.timers, str(tme), (orig, channel, txt))
+            cls.timers[str(tme)] = (orig, channel, txt)
 
     @classmethod
     def delete(cls, tme):
         "delete a timer."
         with cls.lock:
-            delattr(cls.timers, str(tme))
+            del timers[str(tme)]
 
     @classmethod
     def loop(cls):
@@ -62,7 +62,7 @@ class TimerLoop:
             time.sleep(1.0)
             timed = time.time()
             remove = []
-            for tme, args in Method.items(cls.timers):
+            for tme, args in cls.timers.items():
                 if float(tme) < timed:
                     Task.start(cls.run, args)
                     remove.append(tme)
@@ -82,7 +82,7 @@ class TimerLoop:
     @classmethod
     def start(cls):
         "start timers."
-        cls.path = Locater.first(cls.timers) or Disk.ident(cls.timers)
+        cls.path = Locater.first(cls.timers) or "mods.tmr.Timer"
         cls.running.set()
         Task.start(cls.loop, name="Timers.loop")
 

@@ -28,7 +28,7 @@ logger = Log(__name__)
 
 def init():
     "initialize rss module."
-    Disk.read(Config, "rss", "config")
+    Method.updatecls(Config, Disk.read("rss", "config"))
     Run.start()
     nrs = Locater.count("rss")
     txt = f"{nrs} feeds"
@@ -129,7 +129,7 @@ class Run:
                 if not Run.got(txt, feed):
                     Clients.announce(txt)
             State.index = cls.file.tell()
-        Disk.write(State, cls.statefn)
+        Disk.write(State.__dict__, cls.statefn)
         gc.collect(0)
 
     @classmethod
@@ -220,7 +220,7 @@ class Run:
             cls.enable(cls.path)
             Watcher.add(cls.path, cls.callback)
             Watcher.start()
-        cls.statefn = Locater.last(State) or Disk.ident(State)
+        cls.statefn = Locater.last(State) or "mods.rss.State"
         Pool.init(2, Fetching)
         if not once:
             Repeater.add(Config.polltime, cls.run)
@@ -237,7 +237,7 @@ class Run:
         "sync state to disk."
         if cls.index > State.index:
             State.index = cls.index
-            Disk.write(State, cls.statefn)
+            Disk.write(State.__dict__, cls.statefn)
 
 
 class Fetching(Runner):

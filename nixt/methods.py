@@ -35,7 +35,7 @@ class Method:
         "update object with dict."
         if setter is None:
             setter = {}
-        for key, val in cls.items(setter):
+        for key, val in setter.items():
             if skip and val == "":
                 continue
             cls.typed(obj, key, val)

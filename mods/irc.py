@@ -382,7 +382,6 @@ class IRC(Buffer):
             obj.channel = obj.nick
         return self.post(obj, rawstr, arguments)
 
-
     def poll(self):
         "poll on the socket for an msg."
         self.msgs.connected.wait()
@@ -506,7 +505,7 @@ class IRC(Buffer):
 
     def start(self, daemon=True):
         "start client."
-        Disk.read(self.cfg, "irc", "config")
+        Method.updatecls(self.cfg, Disk.read("irc", "config"))
         if self.cfg.channel not in self.channels:
             self.channels.append(self.cfg.channel)
         self.msgs.connected.clear()

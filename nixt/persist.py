@@ -15,7 +15,6 @@ from datetime import datetime
 from .default import Path, RLock
 from .encoder import JSON
 from .methods import Method
-from .objects import Data
 from .utility import Utils
 
 
@@ -59,30 +58,27 @@ class Disk:
     lock = RLock()
 
     @classmethod
-    def ident(cls, obj):
+    def ident(cls, name):
         "return ident string for object."
-        return os.path.join(Method.fqn(obj), *str(datetime.now(tz=None)).split())
+        return os.path.join(name, *str(datetime.now(tz=None)).split())
 
     @classmethod
-    def read(cls, obj, path, base="store"):
+    def read(cls, path, base="store"):
         "read object from path."
         with cls.lock:
             pth = os.path.join(Workdir.wdr, base, path)
             if not os.path.exists(pth):
-                return False
+                return
             with open(pth, "r", encoding="utf-8") as fpt:
                 try:
-                    obj.update(JSON.load(fpt))
+                    return JSON.load(fpt)
                 except json.JSONDecodeError as ex:
                     raise DecodeError(Utils.strip(pth)) from ex
-            return True
 
     @classmethod
-    def write(cls, obj, path="", base="store"):
+    def write(cls, obj, path, base="store"):
         "write object to disk."
         with cls.lock:
-            if path == "":
-                path = cls.ident(obj)
             pth = os.path.join(Workdir.wdr, base, path)
             Utils.cdir(pth)
             with open(pth, "w", encoding="utf-8") as fpt:
@@ -104,7 +100,7 @@ class Locater:
         for _pth, obj in cls.find(kind, nritems=1):
             if not obj:
                 continue
-            result.extend(obj.__dict__.keys())
+            result.extend(obj.keys())
         return set(result)
 
     @classmethod
@@ -128,8 +124,7 @@ class Locater:
         for pth in cls.fns(Workdir.long(kind)):
             obj = Cache.get(pth)
             if not obj:
-                obj = {}
-                Disk.read(obj, pth)
+                obj = Disk.read(pth)
                 Cache.add(pth, obj)
             if not removed and Method.deleted(obj):
                 continue

@@ -31,7 +31,7 @@ def cfg(msg):
         msg.reply(
             Method.fmt(
                 config,
-                Method.keys(config),
+                config.keys(),
                 skip=["word",]
             )
         )

@@ -33,12 +33,12 @@ class State:
     def dump(self):
         "dump state to disk."
         if not self.fnm:
-            self.fnm = Locater.first(self) or Disk.ident(self)
-        Disk.write(self, self.fnm)
+            self.fnm = Locater.first(self) or "mods.wsd.State"
+        Disk.write(self.__dict__, self.fnm)
 
     def load(self):
         "load from disk."
-        Locater.first(self)
+        Locater.first("mods.wsd.State")
 
 
 state = State()
