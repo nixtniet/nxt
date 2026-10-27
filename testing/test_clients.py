@@ -7,29 +7,34 @@
 import unittest
 
 
-from nxt.defines import Client, Engine, Message
+from nixt.defines import Message, Screen
 
 
 buffer = []
 
 
-def hello(event):
-    event.reply(event.text)
-    event.ready()
+def hello(message):
+    "command."
+    message.reply(message.text)
+    message.ready()
 
 
-class MyClient(Client, Engine):
+class MyClient(Screen):
+
+    "clients raw puts text into buffer"
 
     def __init__(self):
-        Engine.__init__(self)
-        Client.__init__(self)
+        Screen.__init__(self)
         self.register("hello", hello)
 
     def raw(self, text):
+        "add text to buffer."
         buffer.append(text)
 
 
 class TestClient(unittest.TestCase):
+
+    "clients unittest."
 
     def setUp(self):
         self.clt = MyClient()
@@ -37,29 +42,34 @@ class TestClient(unittest.TestCase):
         self.clt.start()
 
     def shutDown(self):
+        "shutdown client"
         self.clt.stop()
 
     def test_announce(self):
+        "test announce."
         self.clt.announce("hello")
         self.assertTrue("hello" in buffer)
 
     def test_display(self):
-        evt = Message()
-        evt.reply("test1")
-        evt.reply("test2")
-        self.clt.display(evt)
+        "test display function."
+        msg = Message()
+        msg.reply("test1")
+        msg.reply("test2")
+        self.clt.display(msg)
         self.assertTrue("test1" in buffer)
         self.assertTrue("test2" in buffer)
         self.assertTrue(buffer.index("test1") < buffer.index("test2"))
 
     def test_dosay(self):
+        "test called from external say (dosay)."
         self.clt.dosay("#channel", "yo!")
         self.assertTrue("yo!" in buffer)
 
     def test_put(self):
-        evt = Message()
-        evt.kind = "hello"
-        evt.text = "hi world"
-        self.clt.put(evt)
-        evt.wait()
-        self.assertTrue("hi world" in evt.result)
+        "test putting event to the client."
+        msg = Message()
+        msg.kind = "hello"
+        msg.text = "hi world"
+        self.clt.put(msg)
+        msg.wait()
+        self.assertTrue("hi world" in msg.result)

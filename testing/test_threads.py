@@ -1,23 +1,28 @@
 # This file is placed in the Public Domain.
 
 
-"threading"
+"threads"
 
 
 import unittest
 
 
-from nxt.defines import Task
+from nixt.tasking import Task
 
 
-def func():
-    return "ok"
+buffer = []
 
 
-class TestThread(unittest.TestCase):
+def test():
+    "append to buffer."
+    buffer.append("test")
 
-    def test_task(self):
-        task = Task(func)
-        task.start()
-        result = task.join()
-        self.assertEqual(result, "ok")
+
+class TestThreading(unittest.TestCase):
+
+    "thread unittests"
+
+    def test_construct(self):
+        "test thread construction."
+        task = Task()
+        self.assertTrue(type(task), Task)

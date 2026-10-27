@@ -8,14 +8,12 @@
 # test adding on object to the broker
 
 
->>> from nxt.defines import Broker, Object
+>>> from nixt.defines import Broker, Object
 >>> b = Broker()
 >>> o = Object()
 >>> repr(o) # doctest: +ELLIPSIS
-'<nxt.objects.Object object at ...'
->>> id = b.add(o)
->>> print(id) # doctest: +ELLIPSIS
-<nxt.objects.Object object at ...>
->>> obj = b.get(id)
->>> repr(obj) == id
+'<nixt.objects.Object object at ...'
+>>> b.add(o)
+>>> obj = b.get(repr(o))
+>>> repr(obj) == repr(o)
 True

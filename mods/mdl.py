@@ -5,11 +5,28 @@
 
 
 import datetime
-import logging
 import time
 
 
-from nxt.defines import Object, Clients, Message, Method, Time
+from nixt.defines import Clients, Data, Log, Message, Method, Repeater, Time
+
+
+logger = Log(__name__)
+
+
+def init():
+    "start of genocide model."
+    for key in Method.keys(oorzaken):
+        if "Psych" not in key:
+            continue
+        val = getattr(oorzaken, key, None)
+        if val and int(val) > 10000:
+            msg = Message()
+            msg.text = ""
+            msg.rest = key
+            sec = seconds(val)
+            Repeater.add(sec, cb_stats, msg)
+            logger.info("%s %s", Time.elapsed(time.time()-STARTTIME), SOURCE)
 
 
 DAY = 24*60*60
@@ -39,11 +56,21 @@ aliases["Zwangerschap"] = "pregnancy"
 aliases["Suicide"] = "suicide"
 
 
-demo = Object()
+class Demo(Data):
+
+    "demographic data"
+
+    gehandicapten: int = 0
+    ggz: int = 0
+    population: int = 0
+    part: int = 0
+
+
+demo = Demo()
 demo.gehandicapten = 2000000
 demo.ggz = 800000
 demo.population = 17440000
-demo.part = 7000000000 / demo.population
+demo.part = int(7000000000 / demo.population)
 
 
 jaar = {}
@@ -66,7 +93,7 @@ def getalias(txt):
 
 def getday():
     "get midnite timestamp."
-    day = datetime.datetime.now()
+    day = datetime.datetime.now(tz=None)
     day = day.replace(hour=0, minute=0, second=0, microsecond=0)
     return day.timestamp()
 
@@ -88,29 +115,26 @@ def seconds(nrs):
 
 def iswanted(k, line):
     "see whether a key is in a line of text."
-    for word in line:
-        if word in k:
-            return True
-    return False
+    return any(word in k for word in line)
 
 
 def daily():
     "run daily."
-    while 1:
+    while True:
         time.sleep(24*60*60)
-        evt = Message()
-        cbnow(evt)
+        msg = Message()
+        cb_now(msg)
 
 
 def hourly():
     "run hourly."
-    while 1:
+    while True:
         time.sleep(60*60)
-        evt = Message()
-        cbnow(evt)
+        msg = Message()
+        cb_now(msg)
 
 
-def cbnow(evt):
+def cb_now(msg):
     "callback for current status."
     delta = time.time() - STARTTIME
     txt = Time.elapsed(delta) + " "
@@ -124,30 +148,23 @@ def cbnow(evt):
     Clients.announce(txt)
 
 
-def cbstats(evt):
+def cb_stats(msg):
     "callback for current statistics."
-    nme = evt.rest or "Psych"
+    nme = msg.rest or "Psych"
     needed = seconds(getnr(nme))
     if needed:
         delta = time.time() - STARTTIME
         nrtimes = int(delta/needed)
         nryear = int(YEAR/needed)
         nrday = int(DAY/needed)
-        delta2 = time.time() - getday()
-        thisday = int(delta2/needed)
-        txt = "%s %s #%s (%s/%s/%s) every %s" % (
-            Time.elapsed(delta),
-            getalias(nme).upper(),
-            nrtimes,
-            thisday,
-            nrday,
-            nryear,
-            Time.elapsed(needed)
-        )
+        elapsed = Time.elapsed(delta)
+        alias = getalias(nme).upper()
+        need = Time.elapsed(needed)
+        txt = f"{elapsed} {alias} ({nrtimes}/{nrday}/{nryear}) every {need}"
         Clients.announce(txt)
 
 
-def dis(event):
+def dis(msg):
     "show disease numbers."
     delta = time.time() - STARTTIME
     txt = Time.elapsed(delta) + " "
@@ -159,29 +176,23 @@ def dis(event):
         pertime = Time.elapsed(needed)
         txt += f"{getalias(nme)} {nrtimes} ({pertime}) | "
     txt += SOURCE
-    event.reply(txt)
+    msg.reply(txt)
 
 
-def now(event):
+def now(msg):
     "show current status."
-    nme = event.rest or "Psych"
+    nme = msg.rest or "Psych"
     needed = seconds(getnr(nme))
     if needed:
         delta = time.time() - STARTTIME
         nrtimes = int(delta/needed)
         nryear = int(YEAR/needed)
         nrday = int(DAY/needed)
-        thisday = int(DAY % needed)
-        txt = "%s %s #%s (%s/%s/%s) every %s" % (
-            Time.elapsed(delta),
-            getalias(nme).upper(),
-            nrtimes,
-            thisday,
-            nrday,
-            nryear,
-            Time.elapsed(needed)
-        )
-        event.reply(txt)
+        elapsed = Time.elapsed(delta)
+        alias = getalias(nme).upper()
+        need = Time.elapsed(needed)
+        txt = f"{elapsed} {alias} ({nrtimes}/{nrday}/{nryear}) every {need}"
+        msg.reply(txt)
 
 
 oor = """"Totaal onderliggende doodsoorzaken (aantal)";
@@ -278,7 +289,7 @@ oor = """"Totaal onderliggende doodsoorzaken (aantal)";
          "17 Uitwendige doodsoorzaken/17.5 Overige uitwendige doodsoorzaken (aantal)";
          "18 COVID-19 (Coronavirus ziekte 19)/18 Totaal COVID-19 (Coronavirus 19) (aantal)";
          "18 COVID-19 (Coronavirus ziekte 19)/18.1 Vastgestelde COVID-19 (aantal)";
-         "18 COVID-19 (Coronavirus ziekte 19)/18.2 Vermoedelijke COVID-19 (aantal)""".split(";")
+         "18 COVID-19 (Coronavirus ziekte 19)/18.2 Vermoedelijke COVID-19 (aantal)""".split(";") # noqa: SIM905
 
 
 aantal = """
@@ -377,12 +388,12 @@ aantal = """
           20173;
           17495;
           2678
-         """.split(";")
+         """.split(";") # noqa: SIM905
 
 
-oorzaak = Object()
+oorzaak = Data()
 Method.construct(oorzaak, zip([x.strip() for x in oor], [int(x.strip()) for x in aantal]))
-oorzaken = Object()
+oorzaken = Data()
 
 
 def boot():
@@ -392,8 +403,7 @@ def boot():
         _nr += 1
         if _nr == 0:
             continue
-        if key.startswith('"'):
-            key = key[1:]
+        key = key.removeprefix('"')
         lines = key.split("/")
         if len(lines) > 1 and not lines[1].startswith("Totaal"):
             continue

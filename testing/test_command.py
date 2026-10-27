@@ -7,32 +7,39 @@
 import unittest
 
 
-from nxt.defines import Commands, Engine, Message
+from nixt.defines import Commands, Handler, Message
 
 
-def cmnd(event):
-    event.reply("yo!")
+def cmnd(msg):
+    "test command."
+    msg.reply("yo!")
 
 
 class TestCommands(unittest.TestCase):
 
+    "commands unittests"
+
     def test_construct(self):
+        "test commands construction."
         cmds = Commands()
         self.assertEqual(type(cmds), Commands)
 
     def test_add(self):
+        "test adding a command."
         Commands.add(cmnd)
         self.assertTrue("cmnd" in Commands.cmds)
 
     def test_get(self):
+        "test getting a command."
         Commands.add(cmnd)
         self.assertTrue(Commands.cmds.get("cmnd"))
 
     def test_command(self):
-        clt = Engine()
+        "test running a command."
+        clt = Handler()
         Commands.add(cmnd)
-        evt = Message()
-        evt.text = "cmnd"
-        evt.orig = repr(clt)
-        Commands.command(evt)
-        self.assertTrue("yo!" in evt.result)
+        msg = Message()
+        msg.text = "cmnd"
+        msg.orig = repr(clt)
+        Commands.command(msg)
+        self.assertTrue("yo!" in msg.result)

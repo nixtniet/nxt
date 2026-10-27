@@ -1,150 +1,117 @@
 #!/usr/bin/env python3
 # This file is placed in the Public Domain.
+# pylint: disable=C0413
 
 
 "stress test"
 
 
-import logging
 import os
+import shutil
 import sys
 import threading
 import time
-import _thread
 
 
 sys.path.insert(0, os.getcwd())
 
 
-from nxt.defines import Client, Clients, Commands, Main, Message, Pool
-from nxt.defines import MD5, Method, Mods, Parser, Task, Time
+from nixt.defines import Booting, Commands, Main, Message, Method, Parser
+from nixt.defines import Mods, Pool, Screen, Task, Time, Workdir
 
 
-class Kernel:
-
-    nrevents = 0
-    starttime = 0
-
-    @classmethod
-    def banner(cls, force=False):
-        "hello."
-        if not force and not Main.verbose:
-            return
-        tmr = time.ctime(time.time()).replace("  ", " ")
-        txt = "%s since %s %s (%s)" % (
-            Main.name.upper(),
-            tmr,
-            Main.level.upper() or "WARNING",
-            MD5.core()
-        )
-        print(txt.replace("  ", " "))
-        sys.stdout.flush()
-
-    @classmethod
-    def boot(cls):
-        "configure."
-        Parser.parse(Main, " ".join(sys.argv[1:]))
-        if "v" in Main.opts:
-            Main.verbose = True
-        print(Main)
-        Mods.dir(Mods.moddir())
-        Mods.dir("mods", "mods")
-        if Main.verbose:
-            print("yo!")
-            cls.banner()
-            Commands.scanner()
-
-    @classmethod
-    def shutdown(cls):
-        "call stop on clients."
-        Clients.shutdown()
-        while True:
-            if len(threading.enumerate()) == 1:
-                break
-            time.sleep(0.1)
-
-    @classmethod
-    def wrap(cls, func, *args, dofinal=None):
-        "restore console."
-        import termios
-        try:
-            old = termios.tcgetattr(sys.stdin.fileno())
-        except termios.error:
-            old = False
-        cls.wrapped(func, *args)
-        if old:
-            termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, old)
-        if dofinal:
-            dofinal()
-
-    @classmethod
-    def wrapped(cls, func, *args):
-        "wrap function in a try/except, silence ctrl-c/ctrl-d."
-        try:
-            func(*args)
-        except (KeyboardInterrupt, EOFError):
-            Client.block.set()
-            Task.block.set()
-            _thread.interrupt_main()
-        except Exception as ex:
-            logging.exception(ex)
-            _thread.interrupt_main()
+Workdir.wdr = ".test"
 
 
-class CLI(Client):
+class CLI(Screen):
+
+    "Command Line Interface"
 
     def __init__(self):
-        Client.__init__(self)
+        Screen.__init__(self)
         self.register("command", Commands.command)
 
     def raw(self, text):
         "write to console."
-        if "v" in Main.opts:
+        if Main.verbose:
             print(text.encode('utf-8', 'replace').decode("utf-8"))
             sys.stdout.flush()
 
 
-pool = Pool(CLI)
+class Kernel(Booting):
+
+    "teh kernal"
+
+    messages = []
+    nrevents = 0
+    starttime = time.time()
+
+    @classmethod
+    def boot(cls):
+        cls.configure()
+        Mods.dir("mods", "mods")
+        Commands.scanner()
+        if os.path.exists(Workdir.wdr):
+            shutil.rmtree(Workdir.wdr)
+        if Main.threaded:
+            Pool.nrcpu = os.cpu_count()
+        else:
+            Pool.nrcpu = 1
+        Pool.init(Pool.nrcpu, CLI)
+
+    @classmethod
+    def launch(cls):
+        "launch commands."
+        nrs = Main.index or 1
+        thrs = []
+        for _x in range(nrs):
+            thrs.append(Task.start(cls.payload, pre))
+        for thr in thrs:
+            thr.join()
+        thrs = []
+        for _x in range(nrs):
+            thrs.append(Task.start(cls.payload, examples))
+        for thr in thrs:
+            thr.join()
+        thrs = []
+        for _x in range(nrs):
+            thrs.append(Task.start(cls.payload, post))
+        for thr in thrs:
+            thr.join()
+
+    @classmethod
+    def payload(cls, todo):
+        "payload to run."
+        for cmd, example in todo.items():
+            for ex in example:
+                Kernel.nrevents += 1
+                evt = Message()
+                evt.kind = "command"
+                evt.text = f"{cmd} {ex}"
+                Pool.put(evt)
+                cls.messages.append(evt)
 
 
-def payload(todo):
-    for cmd, example in todo.items():
-        for ex in example:
-            Kernel.nrevents += 1
-            evt = Message()
-            evt.kind = "command"
-            evt.text = f"{cmd} {ex}"
-            pool.put(evt)
-
-
-def final():
-    if "v" not in Main.opts:
-        return
-    total = Kernel.nrevents
-    endtime = time.time()
-    lap = Time.elapsed(endtime-Kernel.starttime)
-    percall = (endtime-Kernel.starttime)/total
-    print(f"{Method.fmt(Main, skip='otxt,txt')}")
-    print(f"events: {total}")
-    print(f"total: {lap} nrs: {Kernel.nrevents} call: %.6fs" % percall)
-    print(threading.enumerate())
+    @classmethod
+    def final(cls):
+        "finalizer."
+        if not Main.verbose:
+            return
+        total = Kernel.nrevents
+        endtime = time.time()
+        lap = Time.elapsed(endtime-Kernel.starttime)
+        percall = (endtime-Kernel.starttime)/total
+        print(f"{Method.fmt(Main, skip='otxt,txt')}")
+        print(f"nrcpu: {Pool.nrcpu} events: {total}")
+        print(f"total: {lap} nrs: {Kernel.nrevents} call: {percall}")
+        print(threading.enumerate())
 
 
 def main():
+    "main code."
+    Parser.parse(Main, " ".join(sys.argv[1:]))
     Kernel.boot()
-    if "t" in Main.opts:
-        nrcpu = os.cpu_count()
-    else:
-        nrcpu = 1
-    Kernel.starttime = time.time()
-    pool.init(nrcpu)
-    nrs = Main.index or 1
-    for _x in range(nrs):
-        payload(pre)
-    for _x in range(nrs):
-        payload(examples)
-    for _x in range(nrs):
-        payload(post)
+    Kernel.launch()
     Kernel.shutdown()
 
 
@@ -154,11 +121,11 @@ examples = {
     "dpl": ["", "tittle.link"],
     "eml": ["", "root@localhost"],
     "flt": ["", "0"],
-    "fnd": ["", "log", "todo"],
-    "fie": ["", "log", "todo"],
+    "fnd": ["", "log", "rss", "todo"],
+    "fie": ["", "log", "rss", "todo"],
     "lou": [""],
     "mbx": ["", "~/25-1-2013"],
-    "man": ["", "nixbot nixtniet@gmail.com Nixt Niet"],
+    "man": ["", "nixt nixtniet@gmail.com Nixt Niet"],
     "nme": ["", "hnrss hn"],
     "now": [""],
     "pth": [""],
@@ -181,15 +148,9 @@ pre = {
         'main',
         'irc',
         'rss',
-        'rst',
-        'udp',
-        'web',
         'main nick=mekker',
         'irc nick=mekker',
         'rss nick=mekker',
-        'rst nick=mekker',
-        'udp nick=mekker',
-        'web nick=mekker'
     ],
     "imp": [
         "",
@@ -206,9 +167,9 @@ post = {
     "dbg": [""],
     "dne": ["", "mekker"],
     "exp": [""],
-    "rem": ["", "rem hnrss"]
+    "rem": ["", "hnrss"]
 }
 
 
 if __name__ == "__main__":
-    Kernel.wrap(main, dofinal=final)
+    Kernel.wrap(main, dofinal=Kernel.final)

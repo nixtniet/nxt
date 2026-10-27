@@ -1,29 +1,56 @@
 # This file is placed in the Public Domain.
 
 
-"logging tests"
+"message"
 
 
 import unittest
 
 
-from nxt.defines import Message
+from nixt.defines import JSON, Message
+
+
+jsontxt = '''{"args": [], "cmd": "", "index": 0, "kind": "msg", "orig": "", "rest": "", "result": [], "text": "", "a": "b"}'''
+
+
+class MyMessage(Message):
+
+    "stub"
+
+    a = ""
 
 
 class TestMessage(unittest.TestCase):
 
-    def test_ready(self):
+    "message unittests"
+
+    def test_construct(self):
+        "test message construction."
         msg = Message()
-        msg.ready()  # pylint: disable=E1102
+        self.assertTrue(type(msg), Message)
+
+    def test_json(self):
+        "test message json dump."
+        msg = MyMessage()
+        msg.a = "b"
+        txt = JSON.dumps(msg)
+        self.assertEqual(txt, jsontxt)
+
+    def test_ready(self):
+        "test flagging a message ready."
+        msg = Message()
+        msg.ready()
         self.assertTrue(msg._ready.is_set())
 
     def test_reply(self):
+        "test replying to a message."
         msg = Message()
         msg.reply("test")
         self.assertTrue("test" in msg.result)
 
     def test_wait(self):
+        "test waiting for a message to complete."
         msg = Message()
-        msg.ready()  # pylint: disable=E1102
+        msg.ready()
         msg.wait()
         self.assertTrue(msg._ready.is_set())

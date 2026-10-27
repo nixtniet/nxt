@@ -7,10 +7,13 @@
 import unittest
 
 
-import nxt.defines as dev
+import nixt.defines as dev
 
 
 class TestDefines(unittest.TestCase):
 
+    "defines unittest"
+
     def test_dir(self):
-        self.assertTrue(len(dir(dev)), 22)
+        "internal interface check."
+        self.assertEqual(len(dir(dev)), 38)

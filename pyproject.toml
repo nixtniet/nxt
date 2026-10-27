@@ -12,7 +12,7 @@ name = "nixt"
 authors = [
     {name = "Nixt Niet", email = "nixtniet@proton.me" },
 ]
-description = "write your own commands"
+description = "write your own commands."
 readme = "README.rst"
 license = "Unlicense"
 classifiers = [
@@ -24,7 +24,6 @@ classifiers = [
 
 [project.scripts]
 "nixt" = "nixt.runtime:main"
-"nixtd" = "nixt.daemons:main"
 
 
 [project.urls]
@@ -36,12 +35,44 @@ classifiers = [
 [tool.setuptools]
 packages = [
     'nixt',
+    'nixt.minimal',
+    'nixt.modules',
+    'nixt.namings',
+    'nixt.network'
 ]
 
 
 [tool.pylint."messages control"]
-disable = ["C,R,W,E0401,E0402"]
+disable = [
+    'R',
+    'attribute-defined-outside-init',
+    'broad-exception-caught',
+    'invalid-name',
+    'import-outside-toplevel',
+    'line-too-long',
+    'protected-access',
+    'relative-beyond-top-level',
+    'unused-argument'
+]
 
 
 [tool.ruff.lint]
-ignore = ["ALL"]
+preview = true
+ignore = [
+    'DTZ',
+    'deprecated-import',
+    'blind-except',
+    'invalid-all-format',
+    'mutable-class-default',
+    'non-pep585-annotation',
+    'non-pep604-annotation-union',
+    'unsorted-imports',
+    'verbose-log-message'
+]
+
+
+[tool.mypy]
+disable_error_code = [
+    'annotation-unchecked',
+    'var-annotated'
+]

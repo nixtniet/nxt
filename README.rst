@@ -3,7 +3,7 @@
 
 ::
 
-    NIXT - write your own commands
+    NIXT - write your own commands.
 
 
 **SYNOPSIS**
@@ -36,8 +36,8 @@
     and add the following:
 
 
-        def hello(event):
-            event.reply("hello world !!")
+        def hello(msg):
+            msg.reply("hello world !!")
 
 
     typing the hello command would result into a hello world !!:

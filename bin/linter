@@ -9,10 +9,10 @@ import os
 import sys
 
 
-NAME = "nxt"
+NAME = "nixt"
 
 
-SKIP = ["--", "Your", "All"]
+SKIP = ["---", "Your", "All", "Success"]
 
 
 def doskip(line):
@@ -31,6 +31,8 @@ def popen(txt):
         sys.stdout.flush()
 
 
-popen(f"ruff check {NAME} bin/{NAME} bin/nixt bin/tinder testing")
-popen(f"pylint {NAME} bin/tinder testing")
-popen(f"flake8 {NAME} bin/tinder testing")
+popen(f"ruff check {NAME} bin/tinder mods extra testing")
+popen(f"pylint {NAME} bin/tinder mods extra testing")
+popen(f"mypy -p {NAME} -p mods -p extra -p testing")
+popen("ty check nixt")
+popen("bin/tinder")

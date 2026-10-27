@@ -1,5 +1,4 @@
 # This file is placed in the Public Domain.
-# ruff: noqa: F403,F405
 
 
 "testing"
