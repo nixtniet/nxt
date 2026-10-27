@@ -44,9 +44,12 @@ class Cache:
     def sync(cls, path, obj):
         "update cached object."
         try:
-            Method.update(cls.paths[path], obj)
-        except KeyError:
-            cls.add(path, obj)
+            cls.paths[path].__dict__.update(obj)
+        except:
+            try:
+                cls.paths[path].update(obj)
+            except KeyError:
+                cls.add(path, obj)
 
 
 class Disk:
@@ -69,7 +72,7 @@ class Disk:
                 return False
             with open(pth, "r", encoding="utf-8") as fpt:
                 try:
-                    Method.update(obj, JSON.load(fpt))
+                    obj.update(JSON.load(fpt))
                 except json.JSONDecodeError as ex:
                     raise DecodeError(Utils.strip(pth)) from ex
             return True
@@ -101,7 +104,7 @@ class Locater:
         for _pth, obj in cls.find(kind, nritems=1):
             if not obj:
                 continue
-            result.extend(Method.keys(obj))
+            result.extend(obj.__dict__.keys())
         return set(result)
 
     @classmethod
@@ -125,7 +128,7 @@ class Locater:
         for pth in cls.fns(Workdir.long(kind)):
             obj = Cache.get(pth)
             if not obj:
-                obj = Data()
+                obj = {}
                 Disk.read(obj, pth)
                 Cache.add(pth, obj)
             if not removed and Method.deleted(obj):
@@ -149,7 +152,7 @@ class Locater:
         res = ""
         if result:
             inp = result[0]
-            Method.update(obj, inp[-1])
+            obj.update(inp[-1])
             res = inp[0]
         return res
 
@@ -194,7 +197,7 @@ class Locater:
         res = ""
         if result:
             inp = result[-1]
-            Method.update(obj, inp[-1])
+            obj.update(inp[-1])
             res = inp[0]
         return res
 

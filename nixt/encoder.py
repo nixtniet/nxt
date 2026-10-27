@@ -41,7 +41,7 @@ class Encoder(json.JSONEncoder):
     def skip(self, obj):
         "yield values without underscored keys."
         result = {}
-        for key, value in Method.items(obj):
+        for key, value in obj.items():
             if key.startswith("_"):
                 continue
             if isinstance(value, types.MethodType):

@@ -16,35 +16,9 @@ class Method:
     "yeah"
 
     @classmethod
-    def clear(cls, obj):
-        "remove all items from the object."
-        obj.__dict__.clear()
-
-    @classmethod
     def clz(cls, obj):
         "return class name of an object."
         return cls.fqn(obj).split(".")[-1]
-
-    @classmethod
-    def construct(cls, obj, *args, **kwargs):
-        "object contructor."
-        if args:
-            val = args[0]
-            if isinstance(val, zip):
-                cls.update(obj, dict(val))
-            elif isinstance(val, dict):
-                cls.update(obj, val)
-            else:
-                cls.update(obj, vars(val))
-        if kwargs:
-            cls.update(obj, kwargs)
-
-    @classmethod
-    def copy(cls, obj):
-        "return shallow copy of the object."
-        oobj = type(obj)()
-        cls.update(oobj, obj.__dict__.copy())
-        return oobj
 
     @classmethod
     def deleted(cls, obj):
@@ -117,50 +91,17 @@ class Method:
         return kin
 
     @classmethod
-    def fromkeys(cls, obj, keyz, value=None):
-        "create a new object with keys from iterable and values set to value."
-        return obj.__dict__.fromkeys(keyz, value)
-
-    @classmethod
-    def get(cls, obj, key, default=None):
-        "return value for key if key is in the object, otherwise return default."
-        try:
-            return obj.__dict__.get(key, default)
-        except AttributeError:
-            return obj.get(key, default)
-
-    @classmethod
     def isempty(cls, obj):
         "check if all keys heve empty value."
-        return all(not cls.get(obj, key) for key in cls.keys(obj))
-
-    @classmethod
-    def items(cls, obj):
-        "object's key,value pairs."
-        if isinstance(obj, type):
-            return [(x, getattr(obj, x)) for x in dir(obj) if not x.startswith("_")]
-        if isinstance(obj, dict):
-            return list(obj.items())
-        if isinstance(obj, MappingProxyType):
-            return list(obj.items())
-        return list(obj.__dict__.items())
-
-    @classmethod
-    def keys(cls, obj):
-        "object's keys."
-        if isinstance(obj, dict):
-            return list(obj.keys())
-        if isinstance(obj, MappingProxyType):
-            return list(obj.keys())
-        return list(obj.__dict__.keys())
+        return all(not obj.get(key) for key in obj.__dict__)
 
     @classmethod
     def merge(cls, obj, obj2):
         "skip emoty values."
-        for key, value in cls.items(obj2):
-            if not value and getattr(obj, key, False):
+        for key, value in obj2.__dict__.items():
+            if not value and obj.__dict__.get(key, False):
                 continue
-            setattr(obj, key, value)
+            obj.__dict__[key] = value
 
     @classmethod
     def modname(cls, obj):
@@ -170,11 +111,11 @@ class Method:
     @classmethod
     def notset(cls, obj, obj2):
         "only set if not set."
-        for key, value in cls.items(obj2):
-            if getattr(obj, key, False):
+        for key, value in obj2.__dict__.items():
+            if obj.__dict__.get(key, False):
                 continue
             if value:
-                setattr(obj, key, value)
+                obj.__dict__[key] = value
 
     @classmethod
     def pkgname(cls, obj):
@@ -182,20 +123,10 @@ class Method:
         return obj.__module__.split(".", maxsplit=1)[0]
 
     @classmethod
-    def pop(cls, obj, key, default=None):
-        "remove key from object and return it's value. return default or KeyError."
-        return obj.__dict__.pop(key, default)
-
-    @classmethod
-    def popitem(cls, obj):
-        "remove and return (key, value) pair."
-        return obj.__dict__.popitem()
-
-    @classmethod
     def reduce(cls, obj):
         "return dict with values setted attributes."
         result = {}
-        for key, value in cls.items(obj):
+        for key, value in obj.__dict__.items():
             if value:
                 result[key] = value
         return result
@@ -211,8 +142,8 @@ class Method:
         if selector is None:
             selector = {}
         res = False
-        for key, value in cls.items(selector):
-            val = getattr(obj, key, None)
+        for key, value in selector.items():
+            val = obj.__dict__.get(key, None)
             if not val:
                 res = False
                 break
@@ -231,7 +162,7 @@ class Method:
         if chars is None:
             chars = "_"
         res = type(obj)()
-        for key, value in cls.items(obj):
+        for key, value in obj.__dict__.items():
             if isinstance(value, MethodType):
                 continue
             donext = False
@@ -240,19 +171,16 @@ class Method:
                     donext = True
             if donext:
                 continue
-            if isinstance(res, dict):
-                res[key] = value
-            else:
-                setattr(res, key, value)
+            res[key] = value
         return res
 
     @classmethod
     def skipped(cls, obj):
         "yield values without underscored keys."
-        for key in dir(obj):
+        for key in obj.__dict__:
             if key.startswith("_"):
                 continue
-            yield getattr(obj, key)
+            yield obj.__dict__.get(key)
 
     @classmethod
     def typed(cls, obj, key, val):
@@ -260,59 +188,34 @@ class Method:
         if not val:
             return None
         if val in ["True", "true", True]:
-            return setattr(obj, key, True)
+            obj.__dict__[key] = True
+            return
         if val in ["False", "false", False]:
-            return setattr(obj, key, False)
+            obj.__dict__[key] = False
+            return
         try:
-            return setattr(obj, key, int(val))
+            obj.__dict__[key] = int(val)
+            return
         except ValueError:
             pass
         try:
-            return setattr(obj, key, float(val))
+            obj.__dict__[key] = float(val)
+            return
         except ValueError:
             pass
-        return setattr(obj, key, val)
+        obj.__dict__[key] = val
 
     @classmethod
-    def update(cls, obj, data):
-        "update object,"
-        if isinstance(obj, type):
-            if isinstance(data, type):
-                for key in dir(data):
-                    if '_' in key:
-                        continue
-                    value = getattr(data, key, None)
-                    if value:
-                        setattr(obj, key, value)
-            else:
-                for key, value in Method.items(data):
-                    setattr(obj, key, value)
-        elif isinstance(obj, dict):
-            if isinstance(data, dict):
-                obj.update(data)
-            else:
-                obj.update(data.__dict__)
-        elif isinstance(obj.__dict__, MappingProxyType):
-            for key, value in data.items():
+    def updatecls(cls, obj, data):
+        for key in dir(data):
+            if '_' in key:
+                continue
+            value = data.get(key, None)
+            if value:
                 setattr(obj, key, value)
-        elif isinstance(data, dict):
-            obj.__dict__.update(data)
-        else:
-            obj.__dict__.update(data.__dict__)
-
-    @classmethod
-    def values(cls, obj):
-        "object's values."
-        if isinstance(obj, type):
-            return [getattr(obj, x) for x in dir(obj) if not x.startswith("_")]
-        if isinstance(obj, dict):
-            return list(obj.values())
-        if isinstance(obj.__dict__, MappingProxyType):
-            res = []
-            for key in obj.__dict__:
-                res.append(obj[key])
-            return res
-        return list(obj.__dict__.values())
+            else:
+                for key, value in data.items():
+                    setattr(obj, key, value)
 
     @classmethod
     def where(cls, obj):

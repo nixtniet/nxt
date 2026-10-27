@@ -124,7 +124,7 @@ class Run:
                 if not line:
                     break
                 feed = Feed()
-                Method.construct(feed, JSONL.loads(line.strip()))
+                feed.__dict__.update(JSONL.loads(line.strip()))
                 txt = cls.display(feed)
                 if not Run.got(txt, feed):
                     Clients.announce(txt)
@@ -153,13 +153,13 @@ class Run:
         else:
             result = ""
         try:
-            displaylist = Method.get(obj, "display_list") or "title,link"
+            displaylist = obj.get("display_list", "title,link")
         except AttributeError:
             displaylist = "title,link,author"
         for key in displaylist.split(","):
             if not key:
                 continue
-            data = Method.get(obj, key, None)
+            data = obj.get(key, None)
             if not data:
                 continue
             stripped = Fetcher.striphtml(data.replace("\n", " ").rstrip())
@@ -289,7 +289,7 @@ class Fetching(Runner):
                 continue
             if Method.isempty(obj):
                 continue
-            Method.update(obj, feed)
+            obj.update(feed)
             if Config.save:
                 Run.log(JSON.dumps(feed))
             if not silent:
@@ -333,22 +333,22 @@ class Fetcher:
         since = cls.modified.get(url, "")
         if since:
             req.add_header('If-Modified-Since', since)
-        response = Response()
-        response.url = url
-        response.reason = ""
+        response = {}
+        response["url"] = url
+        response["reason"] = ""
         try:
-            Method.update(response, cls.request(req))
+            response.update(cls.request(req))
         except Exception as ex:
             # pylint: disable=E1101
-            response.data = b""
+            response["data"] = b""
             if "reason" in dir(ex):
-                response.reason = ex.reason # type: ignore
+                response["reason"] = ex.reason # type: ignore
             else:
-                response.reason = str(ex)
+                response["reason"] = str(ex)
             if "status" in dir(ex):
-                response.status = ex.status # type: ignore
+                response["status"] = ex.status # type: ignore
             else:
-                response.status = None
+                response["status"] = None
         return response
 
     @classmethod
@@ -531,7 +531,7 @@ def dpl(msg):
     setter = {"display_list": msg.args[1]}
     for fnm, feed in Locater.find(Method.fqn(Rss), {"rss": msg.args[0]}):
         if feed:
-            Method.update(feed, setter)
+            feed.update(setter)
             Disk.write(feed, fnm)
     msg.ok()
 
@@ -540,12 +540,10 @@ def exp(msg):
     "export opml."
     with Locks.importlock:
         msg.reply(TEMPLATE)
-        for nrs, ooo in enumerate(Locater.objects(Method.fqn(OPML))):
-            obj = Rss()
-            Method.update(obj, ooo)
+        for nrs, obj in enumerate(Locater.objects(Method.fqn(OPML))):
             name = f"url{nrs}"
-            dipl = obj.display_list
-            url = obj.rss
+            dipl = obj["display_list"]
+            url = obj["rss"]
             txt = f'<outline name="{name}" display_list="{dipl}" xmlUrl="{url}"/>'
             msg.reply(" " * 12 + txt)
         msg.reply(" " * 8 + "</outline>")
@@ -585,13 +583,13 @@ def imp(msg):
                 skipped.append(url)
                 nrskip += 1
                 continue
-            feed = Rss()
-            feed.rss = obj["xmlUrl"]
+            feed = {}
+            feed["rss"] = obj["xmlUrl"]
             del obj["xmlUrl"]
-            Method.update(feed, obj)
-            uri = urllib.parse.urlparse(feed.rss)
-            feed.name = str(max(uri.netloc.split("."), key=len))
-            feed.insertid = insertid
+            feed.update(obj)
+            uri = urllib.parse.urlparse(feed["rss"])
+            feed["name"] = str(max(uri.netloc.split("."), key=len))
+            feed["insertid"] = insertid
             Disk.write(feed)
             nrs += 1
     if nrskip:
@@ -614,11 +612,8 @@ def nme(msg):
                                 Method.fqn(Rss),
                                 selector
                                ):
-        feed = Rss()
-        Method.update(feed, fed)
-        if feed:
-            feed.name = name
-            Disk.write(feed, fnm)
+        fed.name = name
+        Disk.write(fed, fnm)
     msg.ok()
 
 
@@ -629,7 +624,7 @@ def rem(msg):
         return
     for fnm, fed in Locater.find(Method.fqn(Rss)):
         feed = Rss()
-        Method.update(feed, fed)
+        feed.__dict__.update(fed)
         if msg.args[0] not in feed.rss:
             continue
         if feed:
@@ -649,14 +644,13 @@ def res(msg):
                                 Method.fqn(Rss),
                                 removed=True
                                ):
-        feed = Rss()
         Method.update(feed, fed)
-        if msg.args[0] not in feed.rss:
+        if msg.args and msg.args[0] not in fed["rss"]:
             continue
         nrs += 1
-        feed.__deleted__ = False
-        feed.skip = False
-        Disk.write(feed, fnm)
+        fed["__deleted__"] = False
+        fed["skip"] = False
+        Disk.write(fed, fnm)
     msg.reply(f"{nrs} feeds restored.")
 
 

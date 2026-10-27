@@ -8,7 +8,7 @@ import datetime
 import time
 
 
-from nixt.defines import Clients, Data, Log, Message, Method, Repeater, Time
+from nixt.defines import Clients, Log, Message, Method, Repeater, Time
 
 
 logger = Log(__name__)
@@ -16,7 +16,7 @@ logger = Log(__name__)
 
 def init():
     "start of genocide model."
-    for key in Method.keys(oorzaken):
+    for key in oorzaken.keys():
         if "Psych" not in key:
             continue
         val = getattr(oorzaken, key, None)
@@ -56,21 +56,11 @@ aliases["Zwangerschap"] = "pregnancy"
 aliases["Suicide"] = "suicide"
 
 
-class Demo(Data):
-
-    "demographic data"
-
-    gehandicapten: int = 0
-    ggz: int = 0
-    population: int = 0
-    part: int = 0
-
-
-demo = Demo()
-demo.gehandicapten = 2000000
-demo.ggz = 800000
-demo.population = 17440000
-demo.part = int(7000000000 / demo.population)
+demo = {}
+demo["gehandicapten"] = 2000000
+demo["ggz"] = 800000
+demo["population"] = 17440000
+demo["part"] = int(7000000000 / demo["population"])
 
 
 jaar = {}
@@ -100,9 +90,9 @@ def getday():
 
 def getnr(nme):
     "return number of cases."
-    for k in Method.keys(oorzaken):
+    for k in oorzaken.keys():
         if nme.lower() in k.lower():
-            return int(getattr(oorzaken, k))
+            return int(oorzaken.get(k))
     return 0
 
 
@@ -138,7 +128,7 @@ def cb_now(msg):
     "callback for current status."
     delta = time.time() - STARTTIME
     txt = Time.elapsed(delta) + " "
-    for nme in sorted(Method.keys(oorzaken), key=lambda x: seconds(getnr(x))):
+    for nme in sorted(oorzaken.keys(), key=lambda x: seconds(getnr(x))):
         needed = seconds(getnr(nme))
         if needed > 60*60:
             continue
@@ -168,7 +158,7 @@ def dis(msg):
     "show disease numbers."
     delta = time.time() - STARTTIME
     txt = Time.elapsed(delta) + " "
-    for nme in sorted(Method.keys(oorzaken), key=lambda x: seconds(getnr(x))):
+    for nme in sorted(oorzaken.keys(), key=lambda x: seconds(getnr(x))):
         needed = seconds(getnr(nme))
         if needed > 60*60:
             continue
@@ -391,15 +381,15 @@ aantal = """
          """.split(";") # noqa: SIM905
 
 
-oorzaak = Data()
-Method.construct(oorzaak, zip([x.strip() for x in oor], [int(x.strip()) for x in aantal]))
-oorzaken = Data()
+oorzaak = {}
+oorzaak.update(zip([x.strip() for x in oor], [int(x.strip()) for x in aantal]))
+oorzaken = {}
 
 
 def boot():
     "create model data."
     _nr = -1
-    for key in Method.keys(oorzaak):
+    for key in oorzaak.keys():
         _nr += 1
         if _nr == 0:
             continue
@@ -423,7 +413,7 @@ def boot():
         atl = atl.replace("Aandoeningen v.d. ", "")
         nms = " ".join(atl.split()[1:]).capitalize()
         nms = nms.strip()
-        setattr(oorzaken, nms, aantal[_nr])
+        oorzaken[nms] = aantal[_nr]
 
 
 boot()
