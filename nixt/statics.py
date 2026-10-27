@@ -5,7 +5,7 @@
 
 
 CORE = {
-    "booting": "2ba8fc07a7c8ae8a4d31c7448f1eab91",
+    "booting": "a4d6af79e8e02ed9ed76f7e83ef2fb08",
     "clients": "8a3602c69ead4902336f34a0c1ff0bc9",
     "command": "30a97d5eea5cffe44220b12496d391b0",
     "configs": "cd3a6bfd128bcee5a8a34a7dca7a94c6",
@@ -16,10 +16,10 @@ CORE = {
     "handler": "ce2669417c97854896fad10446923423",
     "looping": "ca59722b4b2a188bda75cbcc10abae78",
     "message": "bfadd9e35497d48ac5d7593dbbc0243f",
-    "methods": "f0b219ff5e47c898b1dc21f75e414e94",
-    "objects": "b014fcb1010194fb967afb255d6e2452",
+    "methods": "167cb0f6a5e3fd356046e8db38b2cfd9",
+    "objects": "f98fb16040bed2c789d736fea4dd164b",
     "package": "44b2ca8c92882d14a5feb27d315e17cb",
-    "persist": "2e8443608a33a1c23cb98382b5715687",
+    "persist": "b923729cb81aed09abbca2d241be76f1",
     "pooling": "7086c51df646ac118f605ba74de6715c",
     "repeats": "31c1498ba4eb490a9dedcab4b0aec52c",
     "require": "c1e120b234485261065716ba22001540",

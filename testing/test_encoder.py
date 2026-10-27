@@ -33,9 +33,8 @@ class TestDecoder(unittest.TestCase):
         "test load string."
         obj = Object()
         obj.test = "bla"
-        oobj = Object()
-        Method.construct(oobj, JSON.loads(JSON.dumps(obj)))
-        self.assertEqual(getattr(oobj, "test", None), "bla")
+        oobj = JSON.loads(JSON.dumps(obj))
+        self.assertEqual(oobj.get("test", None), "bla")
 
 
 class TestTypes(unittest.TestCase):
@@ -77,5 +76,5 @@ class TestTypes(unittest.TestCase):
         ooo = Object()
         ooo.a = "b"
         obj = Object()
-        Method.update(obj, JSON.loads(JSON.dumps(ooo)))
+        Method.updatecls(obj, JSON.loads(JSON.dumps(ooo)))
         self.assertTrue(getattr(obj, "a", False))

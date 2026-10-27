@@ -202,9 +202,10 @@ class Run:
             logger.debug("next!")
             return 0
         for fnm, feed in Locater.find(Method.fqn(Rss)):
-            if feed.skip:
+            fed = Feed(feed)
+            if fed.skip:
                 continue
-            Pool.put((fnm, feed, silent))
+            Pool.put((fnm, fed, silent))
             nrs += 1
         return nrs
 
@@ -333,22 +334,22 @@ class Fetcher:
         since = cls.modified.get(url, "")
         if since:
             req.add_header('If-Modified-Since', since)
-        response = {}
-        response["url"] = url
-        response["reason"] = ""
+        response = Response()
+        response.url = url
+        response.reason = ""
         try:
             response.update(cls.request(req))
         except Exception as ex:
             # pylint: disable=E1101
-            response["data"] = b""
+            response.data = b""
             if "reason" in dir(ex):
-                response["reason"] = ex.reason # type: ignore
+                response.reason = ex.reason # type: ignore
             else:
-                response["reason"] = str(ex)
+                response.reason = str(ex)
             if "status" in dir(ex):
-                response["status"] = ex.status # type: ignore
+                response.status = ex.status # type: ignore
             else:
-                response["status"] = None
+                response.status = None
         return response
 
     @classmethod
@@ -590,7 +591,7 @@ def imp(msg):
             uri = urllib.parse.urlparse(feed["rss"])
             feed["name"] = str(max(uri.netloc.split("."), key=len))
             feed["insertid"] = insertid
-            Disk.write(feed)
+            Disk.write(feed, Disk.ident("mods.rss.Rss"))
             nrs += 1
     if nrskip:
         msg.reply(f"skipped {nrskip} urls.")
@@ -612,7 +613,7 @@ def nme(msg):
                                 Method.fqn(Rss),
                                 selector
                                ):
-        fed.name = name
+        fed["name"] = name
         Disk.write(fed, fnm)
     msg.ok()
 
@@ -644,7 +645,6 @@ def res(msg):
                                 Method.fqn(Rss),
                                 removed=True
                                ):
-        Method.update(feed, fed)
         if msg.args and msg.args[0] not in fed["rss"]:
             continue
         nrs += 1
@@ -669,7 +669,7 @@ def rss(msg):
             return
     feed = Rss()
     feed.rss = msg.args[0]
-    Disk.write(feed)
+    Disk.write(feed, Disk.ident("mods.rss.Rss"))
     msg.ok()
 
 

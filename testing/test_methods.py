@@ -9,7 +9,7 @@
 import unittest
 
 
-from nixt.defines import Object, Method
+from nixt.defines import Data, Object, Method
 
 
 class Mine(Object):
@@ -20,18 +20,6 @@ class Mine(Object):
 class TestMethod(unittest.TestCase):
 
     "method unittests"
-
-    def test_construct(self):
-        "test method construction."
-        method = Method()
-        self.assertTrue(type(method), Method)
-
-    def test_clear(self):
-        "test clearing an object."
-        obj = Mine()
-        obj.a = "b"
-        Method.clear(obj)
-        self.assertEqual(str(obj), "{}")
 
     def test_class(self):
         "test calling __class__ on an object."
@@ -97,29 +85,16 @@ class TestMethod(unittest.TestCase):
         obj.key = "value"
         self.assertEqual(obj.key, "value")
 
-    def test_keys(self):
-        "test listing keys of an object."
-        obj = Mine()
-        obj.key = "value"
-        self.assertEqual(list(Method.keys(obj)), ["key"])
-
     def test_len(self):
         "testing length of an object."
         obj = Mine()
         self.assertEqual(len(obj), 0)
 
-    def test_items(self):
-        "check items of an object."
-        obj = Mine()
-        obj.key = "value"
-        self.assertEqual(list(Method.items(obj)), [("key", "value")])
-
     def test_repr(self):
         "test repr() on an object."
-        self.assertTrue(
-                        repr(Method.update(Object(), {"key": "value"})),
-                        {"key": "value"}
-                       )
+        obj = Data({"key": "value"})
+        print(repr(obj))
+        self.assertTrue("nixt.objects.Data" in repr(obj))
 
     def test_setattr(self):
         "test setting an attribute."
@@ -131,17 +106,3 @@ class TestMethod(unittest.TestCase):
         "test concerting an object to a string."
         obj = Mine()
         self.assertEqual(str(obj), "{}")
-
-    def test_update(self):
-        "test updating an object."
-        obj = Mine()
-        obj.key = "value"
-        oobj = Mine()
-        Method.update(oobj, obj)
-        self.assertTrue(oobj.key, "value")
-
-    def test_values(self):
-        "test fetching values of an object."
-        obj = Mine()
-        obj.key = "value"
-        self.assertEqual(list(Method.values(obj)), ["value"])

@@ -38,13 +38,14 @@ class TestDisk(unittest.TestCase):
     def test_loadcfg(self):
         "test loading from disk."
         Main.a = "b"
-        Disk.read(Main, "main", "config")
-        self.assertEqual(getattr(Main, "a", None), "b")
+        Disk.write(Main, "main", "config")
+        cfg = Disk.read("main", "config")
+        self.assertEqual(cfg.get("a", None), "b")
 
     def test_save(self):
         "test saving to disk."
         obj = Method()
-        opath = Disk.write(obj)
+        opath = Disk.write(obj, "test")
         self.assertTrue(os.path.exists(os.path.join(Workdir.wdr, "store", opath)))
 
     def test_writecfg(self):

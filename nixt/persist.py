@@ -43,12 +43,9 @@ class Cache:
     def sync(cls, path, obj):
         "update cached object."
         try:
-            cls.paths[path].__dict__.update(obj)
-        except:
-            try:
-                cls.paths[path].update(obj)
-            except KeyError:
-                cls.add(path, obj)
+            cls.paths[path].update(obj)
+        except (KeyError, AttributeError):
+            cls.add(path, obj)
 
 
 class Disk:
@@ -68,7 +65,7 @@ class Disk:
         with cls.lock:
             pth = os.path.join(Workdir.wdr, base, path)
             if not os.path.exists(pth):
-                return
+                return {}
             with open(pth, "r", encoding="utf-8") as fpt:
                 try:
                     return JSON.load(fpt)
@@ -81,6 +78,10 @@ class Disk:
         with cls.lock:
             pth = os.path.join(Workdir.wdr, base, path)
             Utils.cdir(pth)
+            try:
+                obj = obj.__dict__
+            except AttributeError:
+                pass
             with open(pth, "w", encoding="utf-8") as fpt:
                 JSON.dump(obj, fpt, indent=4)
             Cache.sync(path, obj)

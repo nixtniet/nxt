@@ -11,6 +11,7 @@ import _thread
 
 
 from .clients import Broker, Screen
+from .command import Commands
 from .configs import Main
 from .default import Event, Log
 from .excepts import Errors
@@ -40,9 +41,11 @@ class Boot:
         Mods.dir("modules", Workdir.moddir())
         Mods.dir(f"{Main.name}.minimal", Mods.moddir("minimal"))
         Mods.dir(f"{Main.name}.modules", Mods.moddir())
-        Main.path = os.path.normpath(Main.path)
-        pkgname = Main.path.rsplit(os.sep, maxsplit=1)[-1]
-        Mods.dir(pkgname, Main.path)
+        if Main.path:
+            Main.path = os.path.normpath(Main.path)
+            pkgname = Main.path.rsplit(os.sep, maxsplit=1)[-1]
+            Mods.dir(pkgname, Main.path)
+            Commands.scanner()
 
     @classmethod
     def forever(cls):

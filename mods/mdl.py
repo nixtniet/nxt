@@ -8,7 +8,7 @@ import datetime
 import time
 
 
-from nixt.defines import Clients, Log, Message, Method, Repeater, Time
+from nixt.defines import Clients, Log, Message, Repeater, Time
 
 
 logger = Log(__name__)
@@ -16,7 +16,7 @@ logger = Log(__name__)
 
 def init():
     "start of genocide model."
-    for key in oorzaken.keys():
+    for key in oorzaken:
         if "Psych" not in key:
             continue
         val = getattr(oorzaken, key, None)
@@ -90,7 +90,7 @@ def getday():
 
 def getnr(nme):
     "return number of cases."
-    for k in oorzaken.keys():
+    for k in oorzaken:
         if nme.lower() in k.lower():
             return int(oorzaken.get(k))
     return 0
@@ -389,7 +389,7 @@ oorzaken = {}
 def boot():
     "create model data."
     _nr = -1
-    for key in oorzaak.keys():
+    for key in oorzaak:
         _nr += 1
         if _nr == 0:
             continue

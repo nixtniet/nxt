@@ -18,10 +18,6 @@ class Email(Data):
 
     "email record"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.text: str
-
 
 def eml(msg):
     "search emails."
@@ -29,7 +25,7 @@ def eml(msg):
     args = ["From", "Subject"]
     args.extend(msg.args)
     if msg.gets:
-        args.extend(Method.keys(msg.gets))
+        args.extend(msg.gets.keys())
     for key in msg.silent:
         if key in args:
             args.remove(key)
@@ -80,10 +76,8 @@ def mbx(msg):
     nrs = 0
     try:
         for mail in thing:
-            tmp = Data()
-            Method.update(tmp, mail)
-            obj = Email()
-            Method.update(obj, tmp._headers) # pylint: disable=W0212
+            tmp = Data(mail)
+            obj = Email(tmp._headers) # pylint: disable=W0212
             for payload in mail.walk():
                 if payload.get_content_type() == 'text/plain':
                     load =  payload.get_payload()
@@ -93,7 +87,7 @@ def mbx(msg):
                         for line in load:
                             obj.text += str(line)
             obj.text = obj.text.replace("\\n", "\n")
-            Disk.write(obj)
+            Disk.write(obj, Disk.ident("mods.eml.Email"))
             nrs += 1
         if nrs:
             msg.ok(nrs)

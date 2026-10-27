@@ -143,7 +143,7 @@ class Method:
             selector = {}
         res = False
         for key, value in selector.items():
-            val = obj.__dict__.get(key, None)
+            val = obj.get(key, None)
             if not val:
                 res = False
                 break
@@ -162,7 +162,11 @@ class Method:
         if chars is None:
             chars = "_"
         res = type(obj)()
-        for key, value in obj.__dict__.items():
+        try:
+            obj = obj.__dict__
+        except AttributeError:
+            pass
+        for key, value in obj.items():
             if isinstance(value, MethodType):
                 continue
             donext = False
@@ -185,28 +189,35 @@ class Method:
     @classmethod
     def typed(cls, obj, key, val):
         "assign proper types."
-        if not val:
-            return None
+        if obj is None or not val:
+            return
+        try:
+            obj = obj.__dict__
+        except AttributeError:
+            pass
+        if isinstance(obj, MappingProxyType):
+            obj = dict(obj)
         if val in ["True", "true", True]:
-            obj.__dict__[key] = True
+            obj[key] = True
             return
         if val in ["False", "false", False]:
-            obj.__dict__[key] = False
+            obj[key] = False
             return
         try:
-            obj.__dict__[key] = int(val)
+            obj[key] = int(val)
             return
         except ValueError:
             pass
         try:
-            obj.__dict__[key] = float(val)
+            obj[key] = float(val)
             return
         except ValueError:
             pass
-        obj.__dict__[key] = val
+        obj[key] = val
 
     @classmethod
     def updatecls(cls, obj, data):
+        "update a class."
         for key in dir(data):
             if '_' in key:
                 continue

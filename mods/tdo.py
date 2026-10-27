@@ -23,7 +23,7 @@ def dne(msg):
         return
     selector = {'txt': msg.args[0]}
     nmr = 0
-    for fnm, obj in Locater.find('todo', selector):
+    for fnm, obj in Locater.find('mods.tdo.Todo', selector):
         nmr += 1
         obj.__deleted__ = True
         Disk.write(obj, fnm)
@@ -40,5 +40,5 @@ def tdo(msg):
         return
     obj = Todo()
     obj.txt = msg.rest
-    Disk.write(obj)
+    Disk.write(obj, Disk.ident("mods.tdo.Todo"))
     msg.ok()

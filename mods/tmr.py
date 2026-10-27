@@ -53,7 +53,7 @@ class TimerLoop:
     def delete(cls, tme):
         "delete a timer."
         with cls.lock:
-            del timers[str(tme)]
+            del cls.timers[str(tme)]
 
     @classmethod
     def loop(cls):

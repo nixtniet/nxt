@@ -4,7 +4,7 @@
 "configuration"
 
 
-from nixt.defines import Data, Disk, Method, Mods
+from nixt.defines import Disk, Main, Method, Mods
 
 
 def cfg(msg):
@@ -16,9 +16,7 @@ def cfg(msg):
         msg.iface(f"<{mods}>")
         return
     name = msg.args[0]
-    config = Data()
-    Disk.read(config, name, "config")
-    if name != "main" and not config:
+    if name != "main":
         mod = Mods.get(name)
         if not mod:
             msg.reply(f"no {name} module found.")
@@ -27,11 +25,13 @@ def cfg(msg):
         if not config:
             msg.reply(f"no {name} config found.")
             return
+    else:
+        config = Main
     if not msg.sets:
         msg.reply(
             Method.fmt(
                 config,
-                config.keys(),
+                vars(config),
                 skip=["word",]
             )
         )

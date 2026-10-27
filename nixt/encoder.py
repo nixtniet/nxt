@@ -9,7 +9,6 @@ import types
 
 
 from .default import RLock
-from .methods import Method
 from .typings import MappingProxyType
 
 
