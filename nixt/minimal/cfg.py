@@ -37,5 +37,5 @@ def cfg(msg):
         )
         return
     Method.edit(config, msg.sets)
-    Disk.write(dict(config), name, "config")
+    Disk.write(vars(config), name, "config")
     msg.ok()

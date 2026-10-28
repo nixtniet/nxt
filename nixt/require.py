@@ -8,7 +8,7 @@ import inspect
 import os
 
 
-from .defines import JSON, MD5, Commands, Main, Mods, Task, Utils
+from .defines import JSON, MD5, Commands, Main, Mods, Utils, Worker
 
 
 class Cmd:
@@ -49,7 +49,7 @@ class Cmd:
                     continue
                 md5s[name] = MD5.md5(module.__file__)
                 for cmd in Commands.scan(module):
-                    Commands.names[Task.getname(cmd)] = cmd.__module__.split(".")[-1]
+                    Commands.names[Worker.getname(cmd)] = cmd.__module__.split(".")[-1]
         corepath = os.path.dirname(str(inspect.getsourcefile(Mods)))
         MD5.createmd5(corepath, core)
         msg.reply("# This file is placed in the Public Domain.")

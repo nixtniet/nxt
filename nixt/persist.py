@@ -14,7 +14,6 @@ from datetime import datetime
 
 from .default import Path, RLock
 from .encoder import JSON
-from .excepts import Errors
 from .methods import Method
 from .utility import Utils
 
@@ -44,8 +43,7 @@ class Cache:
     def sync(cls, path, obj):
         "update cached object."
         if not isinstance(obj, dict):
-            raise Exception(type(obj))
-            return
+            raise TypeError(obj)
         try:
             cls.paths[path].update(obj)
         except (KeyError, AttributeError):

@@ -7,7 +7,6 @@
 import inspect
 import logging
 import time
-import _thread
 
 
 from .default import Event, Queue, RLock, Thread
