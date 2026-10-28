@@ -40,5 +40,5 @@ def tdo(msg):
         return
     obj = Todo()
     obj.txt = msg.rest
-    Disk.write(obj, Disk.ident("mods.tdo.Todo"))
+    Disk.write(vars(obj), Disk.ident("mods.tdo.Todo"))
     msg.ok()

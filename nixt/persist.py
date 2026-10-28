@@ -14,6 +14,7 @@ from datetime import datetime
 
 from .default import Path, RLock
 from .encoder import JSON
+from .excepts import Errors
 from .methods import Method
 from .utility import Utils
 
@@ -42,6 +43,9 @@ class Cache:
     @classmethod
     def sync(cls, path, obj):
         "update cached object."
+        if not isinstance(obj, dict):
+            raise Exception(type(obj))
+            return
         try:
             cls.paths[path].update(obj)
         except (KeyError, AttributeError):
@@ -78,10 +82,6 @@ class Disk:
         with cls.lock:
             pth = os.path.join(Workdir.wdr, base, path)
             Utils.cdir(pth)
-            try:
-                obj = obj.__dict__
-            except AttributeError:
-                pass
             with open(pth, "w", encoding="utf-8") as fpt:
                 JSON.dump(obj, fpt, indent=4)
             Cache.sync(path, obj)

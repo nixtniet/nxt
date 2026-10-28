@@ -31,11 +31,11 @@ def cfg(msg):
         msg.reply(
             Method.fmt(
                 config,
-                vars(config),
+                vars(config).keys(),
                 skip=["word",]
             )
         )
         return
     Method.edit(config, msg.sets)
-    Disk.write(config, name, "config")
+    Disk.write(dict(config), name, "config")
     msg.ok()

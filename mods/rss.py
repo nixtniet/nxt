@@ -129,7 +129,7 @@ class Run:
                 if not Run.got(txt, feed):
                     Clients.announce(txt)
             State.index = cls.file.tell()
-        Disk.write(State.__dict__, cls.statefn)
+        Disk.write(vars(State), cls.statefn)
         gc.collect(0)
 
     @classmethod
@@ -139,7 +139,7 @@ class Run:
         for fnm, feed in Locater.find(Method.fqn(Rss)):
             if feed.skip:
                 feed.skip = False
-                Disk.write(feed, fnm)
+                Disk.write(vars(feed), fnm)
                 counter += 1
         logger.debug("clear %s", counter)
         return counter
@@ -238,7 +238,7 @@ class Run:
         "sync state to disk."
         if cls.index > State.index:
             State.index = cls.index
-            Disk.write(State.__dict__, cls.statefn)
+            Disk.write(vars(State), cls.statefn)
 
 
 class Fetching(Runner):
@@ -260,7 +260,7 @@ class Fetching(Runner):
                 feed.status = response.status
                 feed.error = response.error
                 feed.skip = True
-                Disk.write(feed, fnm)
+                Disk.write(vars(feed), fnm)
                 logger.warning("skipt %s %s %s", feed.rss, response.status, response.reason)
             yield Feed()
         else:
@@ -302,7 +302,7 @@ class Fetching(Runner):
             del obj
         if has:
             feed.seen = feed.seen[:counter]
-            Disk.write(feed, fnm)
+            Disk.write(vars(feed), fnm)
             logger.debug("write %s (%s)", feed.rss, gotcha)
         if counter:
             gc.collect(0)
@@ -501,8 +501,11 @@ def atr(msg):
     if not msg.rest:
         msg.iface("<stringinurl>")
         return
-    for obj in Locater.objects(Method.fqn(Rss), {'rss': msg.rest}):
-        request = Fetcher.geturl(obj.rss)
+    for obj in Locater.objects("mods.rss.Rss", {'rss': msg.rest}):
+        url = obj.get("rss", None)
+        if not url:
+            continue
+        request = Fetcher.geturl(url)
         if not request:
             continue
         if obj.rss.endswith('atom'):
@@ -591,7 +594,7 @@ def imp(msg):
             uri = urllib.parse.urlparse(feed["rss"])
             feed["name"] = str(max(uri.netloc.split("."), key=len))
             feed["insertid"] = insertid
-            Disk.write(feed, Disk.ident("mods.rss.Rss"))
+            Disk.write(vars(feed), Disk.ident("mods.rss.Rss"))
             nrs += 1
     if nrskip:
         msg.reply(f"skipped {nrskip} urls.")
@@ -624,15 +627,12 @@ def rem(msg):
         msg.iface("<stringinurl>")
         return
     for fnm, fed in Locater.find(Method.fqn(Rss)):
-        feed = Rss()
-        feed.__dict__.update(fed)
-        if msg.args[0] not in feed.rss:
+        if msg.args[0] not in fed.get("rss", ""):
             continue
-        if feed:
-            feed.__deleted__ = True
-            Disk.write(feed, fnm)
-            msg.ok()
-            break
+        fed["__deleted__"] = True
+        Disk.write(fed, fnm)
+        msg.ok()
+        break
 
 
 def res(msg):
@@ -645,7 +645,7 @@ def res(msg):
                                 Method.fqn(Rss),
                                 removed=True
                                ):
-        if msg.args and msg.args[0] not in fed["rss"]:
+        if msg.args and msg.args[0] not in fed.get("rss", ""):
             continue
         nrs += 1
         fed["__deleted__"] = False
@@ -667,8 +667,8 @@ def rss(msg):
         if result:
             msg.reply(f"{url} is known")
             return
-    feed = Rss()
-    feed.rss = msg.args[0]
+    feed = {}
+    feed["rss"] = msg.args[0]
     Disk.write(feed, Disk.ident("mods.rss.Rss"))
     msg.ok()
 

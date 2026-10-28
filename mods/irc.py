@@ -37,7 +37,7 @@ def init():
 
 class Config(Cfg):
 
-    "IRC cofniguration"
+    "IRC configuration"
 
     name = Main.name or Method.pkgname(Mods)
     channel = Main.channel or f"#{name}"
@@ -476,7 +476,7 @@ class IRC(Buffer):
 
     def rlog(self, txt):
         "log function that ignore ping/pong/etc."
-        for ign in Config.ignore:
+        for ign in self.cfg.ignore:
             if ign in str(txt):
                 return
         logger.debug(txt)
@@ -505,7 +505,7 @@ class IRC(Buffer):
 
     def start(self, daemon=True):
         "start client."
-        Method.updatecls(self.cfg, Disk.read("irc", "config"))
+        self.cfg.update(Disk.read("irc", "config") or {})
         if self.cfg.channel not in self.channels:
             self.channels.append(self.cfg.channel)
         self.msgs.connected.clear()
@@ -590,8 +590,8 @@ def cb_notice(msg):
     "notice callback."
     bot = Broker.get(msg.orig)
     if msg.text.startswith("VERSION"):
-        name = Config.name.upper()
-        ver = Config.version
+        name = bot.cfg.name.upper()
+        ver = bot.cfg.version
         user = bot.cfg.username
         txt = f"\001VERSION {name} {ver} - {user}\001"
         bot.docommand("NOTICE", msg.channel, txt)
