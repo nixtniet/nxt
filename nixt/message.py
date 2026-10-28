@@ -19,7 +19,7 @@ class Message(Data):
         self.args = []
         self.cmd = ""
         self.index = 0
-        self.kind = "msg"
+        self.kind = "message"
         self.orig = ""
         self.rest = ""
         self.result = []

@@ -43,7 +43,7 @@ class Cache:
     def sync(cls, path, obj):
         "update cached object."
         if not isinstance(obj, dict):
-            raise TypeError(obj)
+            raise TypeError(type(obj))
         try:
             cls.paths[path].update(obj)
         except (KeyError, AttributeError):

@@ -10,7 +10,7 @@ import unittest
 from nixt.defines import JSON, Message
 
 
-jsontxt = '''{"args": [], "cmd": "", "index": 0, "kind": "msg", "orig": "", "rest": "", "result": [], "text": "", "a": "b"}'''
+jsontxt = '''{"a": "b", "args": [], "cmd": "", "index": 0, "kind": "message", "orig": "", "rest": "", "result": [], "text": ""}'''
 
 
 class MyMessage(Message):

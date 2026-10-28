@@ -157,23 +157,18 @@ class Method:
         return res
 
     @classmethod
-    def skip(cls, obj, chars="_"):
+    def skip(cls, obj, char=None):
         "skip class keys containing chars."
-        if chars is None:
-            chars = "_"
-        res = type(obj)()
-        try:
-            obj = obj.__dict__
-        except AttributeError:
-            pass
-        for key, value in obj.items():
-            if isinstance(value, MethodType):
+        if char is None:
+            char = "_"
+        res = {}
+        for key in dir(obj):
+            if char in key:
                 continue
-            donext = False
-            for char in chars:
-                if char in key:
-                    donext = True
-            if donext:
+            value = getattr(obj, key, None)
+            if not value:
+                continue
+            if isinstance(value, MethodType):
                 continue
             res[key] = value
         return res

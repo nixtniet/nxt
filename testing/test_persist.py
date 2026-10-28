@@ -38,20 +38,20 @@ class TestDisk(unittest.TestCase):
     def test_loadcfg(self):
         "test loading from disk."
         Main.a = "b"
-        Disk.write(Main, "main", "config")
+        Disk.write(Method.skip(Main), "main", "config")
         cfg = Disk.read("main", "config")
         self.assertEqual(cfg.get("a", None), "b")
 
     def test_save(self):
         "test saving to disk."
-        obj = Method()
+        obj = {}
         opath = Disk.write(obj, "test")
         self.assertTrue(os.path.exists(os.path.join(Workdir.wdr, "store", opath)))
 
     def test_writecfg(self):
         "test writing config to disk."
         Main.a = "b"
-        Disk.write(Main, "main", "config")
+        Disk.write(Method.skip(Main), "main", "config")
         self.assertTrue(os.path.exists(os.path.join(Workdir.wdr, "config", "main")))
 
 
