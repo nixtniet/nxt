@@ -52,7 +52,8 @@ disable = [
     'line-too-long',
     'protected-access',
     'relative-beyond-top-level',
-    'unused-argument'
+    'unused-argument',
+    'wrong-import-position'
 ]
 
 
