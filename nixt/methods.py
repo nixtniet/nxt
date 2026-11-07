@@ -130,7 +130,6 @@ class Dict:
             res[key] = value
         return res
 
-
     @classmethod
     def typed(cls, dct, key, val):
         "assign proper types."

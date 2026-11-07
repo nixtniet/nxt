@@ -55,7 +55,7 @@ class Commands:
             mod = Mods.get(modname)
             if not mod:
                 continue
-            result.extend([Utils.funcname(x) for x in Commands.scan(mod, True)])
+            result.extend([Utils.funcname(x) for x in cls.scan(mod, True)])
         return result
 
     @classmethod
