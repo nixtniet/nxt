@@ -4,10 +4,7 @@
 "configuration"
 
 
-from nixt.configs import Main
-from nixt.methods import Method
-from nixt.package import Mods
-from nixt.persist import Disk
+from nixt.defines import Disk, Helpers, Main, Mods
 
 
 def cfg(msg):
@@ -32,13 +29,13 @@ def cfg(msg):
         config = Main
     if not msg.sets:
         msg.reply(
-            Method.fmt(
-                config,
+            Helpers.fmt(
+                vars(config),
                 vars(config).keys(),
                 skip=["word",]
             )
         )
         return
-    Method.edit(config, msg.sets)
-    Disk.write(config, name, "config")
+    Helpers.edit(config, msg.sets)
+    Disk.write(vars(config), name, "config")
     msg.ok()

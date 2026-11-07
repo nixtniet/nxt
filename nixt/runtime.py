@@ -11,7 +11,7 @@ import time
 from argparse import SUPPRESS, ArgumentParser, RawTextHelpFormatter
 
 
-from .defines import Boot, Cmd, Commands, Daemon, Dict, Main, Message, Method
+from .defines import Boot, Cmd, Commands, Daemon, Helpers, Main, Message
 from .defines import MD5, Mods, Screen
 
 
@@ -22,7 +22,7 @@ class Arguments:
     @classmethod
     def getargs(cls):
         "parse commandline arguments."
-        Main.name = Main.name or Method.pkgname(Main)
+        Main.name = Main.name or Helpers.pkgname(Main)
         theparser = cls.getparser()
         group = theparser.add_mutually_exclusive_group()
         group.add_argument("-c", "--console", action="store_true", help="start a console.")
@@ -43,7 +43,7 @@ class Arguments:
         optparser.add_argument("--scanner", action="store_true", help="do full modules scan on boot.")
         optparser.add_argument("--wdr", default="", help="set modules directory.")
         args, arguments = theparser.parse_known_args()
-        Dict.update(Main, vars(args))
+        Helpers.update(Main, vars(args))
         Main.otxt = " ".join(arguments)
 
     @classmethod

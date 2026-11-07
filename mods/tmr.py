@@ -8,9 +8,8 @@ import random
 import time
 
 
-from nixt.defines import Event, RLock
-from nixt.defines import Broker, Dict, Log,  Object, Task, Time
-from nixt.defines import Disk, Locater, Method
+from nixt.defines import Broker, Disk, Event, Helpers, Locater, Log
+from nixt.defines import Object, RLock, Task, Time
 
 
 logger = Log(__name__)
@@ -41,7 +40,7 @@ class TimerLoop:
     lock = RLock()
     path = ""
     running = Event()
-    timers = Timers()
+    timers = {}
 
     @classmethod
     def add(cls, tme, orig, channel,  txt):
@@ -62,7 +61,7 @@ class TimerLoop:
             time.sleep(1.0)
             timed = time.time()
             remove = []
-            for tme, args in Dict.items(cls.timers):
+            for tme, args in cls.timers.items():
                 if float(tme) < timed:
                     Task.start(cls.run, args)
                     remove.append(tme)
@@ -82,7 +81,7 @@ class TimerLoop:
     @classmethod
     def start(cls):
         "start timers."
-        cls.path = Locater.first(cls.timers)
+        cls.path = Locater.first("timers", cls.timers)
         cls.running.set()
         Task.start(cls.loop, name="Timers.loop")
 
@@ -110,5 +109,5 @@ def tmr(msg):
     diff = todo - time.time()
     txt = " ".join(msg.args[1:])
     bot = Broker.get(msg.orig)
-    TimerLoop.add(todo, Method.fqn(bot), msg.channel, txt)
+    TimerLoop.add(todo, Helpers.fqn(bot), msg.channel, txt)
     msg.ok(Time.elapsed(diff))

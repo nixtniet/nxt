@@ -22,7 +22,6 @@ def log(msg):
     if len(msg.args) == 0:
         msg.iface("<txt>")
         return
-    obj = Log()
-    obj.txt = msg.rest
-    Disk.write(obj)
+    dct = {"txt": msg.rest}
+    Disk.write(dct, Disk.ident(Log))
     msg.ok()

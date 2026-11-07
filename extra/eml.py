@@ -11,7 +11,7 @@ import time
 from mailbox import Maildir, mbox
 
 
-from nixt.defines import Data, Dict, Disk, Locater, Method, Time
+from nixt.defines import Data, Disk, Helpers, Locater, Time
 
 
 class Email(Data):
@@ -40,14 +40,14 @@ def eml(msg):
             obj = obj[-1]
             tme = getattr(obj, "Date", "")
             diff = time.time() - Time.timed(tme)
-            txt = Method.fmt(obj, arguments, plain=True)
+            txt = Helpers.fmt(obj, arguments, plain=True)
             msg.reply(f'{msg.index} {txt} {Time.elapsed(diff)}')
     else:
         for _fn, obj in result:
             nrs += 1
             tme = getattr(obj, "Date", "")
             diff = time.time() - Time.timed(tme)
-            txt = Method.fmt(obj, arguments, plain=True)
+            txt = Helpers.fmt(obj, arguments, plain=True)
             msg.reply(f'{nrs} {txt} {Time.elapsed(diff)}')
     if not result:
         msg.reply("no emails found.")
@@ -76,9 +76,10 @@ def mbx(msg):
     nrs = 0
     try:
         for mail in thing:
-            tmp = Data()
-            Dict.update(tmp, mail)
-            obj = Email(tmp._headers)
+            tmp = {}
+            tmp.update(mail)
+            obj = Email()
+            obj.update(tmp._headers)
             for payload in mail.walk():
                 if payload.get_content_type() == 'text/plain':
                     load =  payload.get_payload()
@@ -88,7 +89,7 @@ def mbx(msg):
                         for line in load:
                             obj.text += str(line)
             obj.text = obj.text.replace("\\n", "\n")
-            Disk.write(obj, Disk.ident("mods.eml.Email"))
+            Disk.write(obj, Disk.ident(Email))
             nrs += 1
         if nrs:
             msg.ok(nrs)

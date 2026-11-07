@@ -8,8 +8,8 @@ import inspect
 
 
 from .clients import Clients
+from .helpers import Helpers
 from .message import Message
-from .methods import Method
 from .objects import Data
 from .package import Mods
 from .utility import Utils
@@ -41,7 +41,7 @@ class Commands:
     @classmethod
     def command(cls, msg):
         "command callback."
-        Parser.parse(msg, msg.text)
+        Parser.parse(vars(msg), msg.text)
         func = cls.cmds.get(msg.cmd, cls.ondemand(msg.cmd))
         if func:
             func(msg)
@@ -118,73 +118,70 @@ class Parser:
     "parsing for commands"
 
     @classmethod
-    def init(cls, obj, text, clean=False):
+    def init(cls, dct, text, clean=False):
         "set default values."
         data = {
             "args": [],
             "cmd": "",
-            "gets": Data(),
+            "gets": {},
             "index": None,
             "init": "",
             "mod": "",
             "opts": "",
             "otxt": text,
             "rest": "",
-            "silent": Data(),
-            "sets": Data(),
+            "silent": {},
+            "sets": {},
             "text": text
         }
         for k, v in data.items():
             if not clean:
-                setattr(obj, k, getattr(obj, k, v) or v)
+                dct[k] = data.get(k, v) or v
             else:
-                setattr(obj, k, v)
+                dct[k] = v
 
     @classmethod
-    def parse(cls, obj, text, clean=False):
+    def parse(cls, dct, text, clean=False):
         "parse text for command and arguments."
-        cls.init(obj, text, clean)
+        cls.init(dct, text, clean)
         args = []
         nr = -1
         for spli in text.split():
             if spli.startswith("--"):
-                obj.opts += f",{spli[2:]}"
+                dct["opts"] += f",{spli[2:]}"
                 continue
             if spli.startswith("-"):
                 try:
-                    obj.index = int(spli[1:])
+                    dct["index"] = int(spli[1:])
                 except ValueError:
-                    obj.opts += spli[1:]
+                    dct["opts"] += spli[1:]
                 continue
             if "-=" in spli:
                 key, value = spli.split("-=", maxsplit=1)
-                Method.typed(obj.silent, key, value)
-                Method.typed(obj.gets, key, value)
+                Helpers.typed(dct["silent"], key, value)
+                Helpers.typed(dct["gets"], key, value)
                 continue
             if "==" in spli:
                 key, value = spli.split("==", maxsplit=1)
-                Method.typed(obj.gets, key, value)
+                Helpers.typed(dct["gets"], key, value)
                 continue
             if "=" in spli:
                 key, value = spli.split("=", maxsplit=1)
-                Method.typed(obj.sets, key, value)
+                Helpers.typed(dct["sets"], key, value)
                 continue
             nr += 1
             if nr == 0:
-                obj.cmd = spli
+                dct["cmd"] = spli
                 continue
             args.append(spli)
         if args:
-            obj.args = args
-            obj.text = obj.mod + " " + obj.cmd
-            obj.rest = " ".join(obj.args)
-            obj.text = obj.text + " " + obj.rest
-        else:
-            obj.text = obj.mod + " " + obj.cmd
-        if "v" in obj.opts:
-            obj.verbose = True
-        if "t" in obj.opts:
-            obj.threaded = True
+            dct["args"] = args
+            dct["rest"] = " ".join(dct.get("args", []))
+            dct["text"] = dct["cmd"] + " " + dct["rest"]
+        if "v" in dct["opts"]:
+            dct["verbose"] = True
+        if "t" in dct["opts"]:
+            dct["threaded"] = True
 
 
 def __dir__():

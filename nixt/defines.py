@@ -12,10 +12,10 @@ from .daemons import Daemon
 from .encoder import JSON, JSONL
 from .excepts import Errors
 from .handler import Handler
+from .helpers import Helpers
 from .looping import Loop
 from .message import Message
-from .methods import Method
-from .objects import Data, Dict, Object
+from .objects import Data, Object
 from .package import Mods
 from .persist import Disk, Locater, Stated, Workdir
 from .pooling import Pool, Runner
@@ -42,20 +42,19 @@ __all__ = (
     'Config',
     'Daemon',
     'Data',
-    'Dict',
     'Disk',
     'Display',
     'Errors',
     'Event',
     'Format',
     'Handler',
+    'Helpers',
     'Locater',
     'Log',
     'Logging',
     'Loop',
     'Main',
     'Message',
-    'Method',
     'Mods',
     'Object',
     'Output',

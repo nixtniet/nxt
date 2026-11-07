@@ -4,7 +4,7 @@
 "todo"
 
 
-from nixt.defines import Dict, Disk, Locater, Object
+from nixt.defines import Disk, Locater, Object
 
 
 class Todo(Object):
@@ -23,11 +23,8 @@ def dne(msg):
         return
     selector = {'txt': msg.args[0]}
     nmr = 0
-    for fnm, obj in Locater.find('todo', selector):
-        nmr += 1
-        todo = Todo()
-        Dict.update(todo, obj)
-        todo.__deleted__ = True
+    for fnm, dct in Locater.find('todo', selector):
+        dct["__deleted_"] = True
         Disk.write(todo, fnm)
         msg.ok()
         break
@@ -40,7 +37,7 @@ def tdo(msg):
     if not msg.rest:
         msg.iface("<txt>")
         return
-    obj = Todo()
-    obj.txt = msg.rest
-    Disk.write(obj)
+    dct = {}
+    dct["txt"] = msg.rest
+    Disk.write(dct, Disk.ident(Todo))
     msg.ok()

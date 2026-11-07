@@ -24,8 +24,8 @@ from http.client    import RemoteDisconnected
 from ssl            import SSLError
 
 
-from nixt.defines import Cfg, Clients, Data, Dict, Disk, Format, JSON, JSONL
-from nixt.defines import Locater, Log, Logging, MD5, Main, Method,  Pool
+from nixt.defines import Cfg, Clients, Data, Disk, Format, JSON, JSONL
+from nixt.defines import Locater, Log, Logging, MD5, Main, Helpers,  Pool
 from nixt.defines import Repeater, RLock, Runner, Stated, Utils, Watcher
 from nixt.defines import Workdir
 
@@ -35,7 +35,7 @@ logger = Log(__name__)
 
 def init():
     "initialize rss module."
-    Dict.update(Config, Disk.read("rss", "config"))
+    Helpers.update(Config, Disk.read("rss", "config"))
     Run.start()
     nrs = Locater.count("rss")
     txt = f"{nrs} feeds"
@@ -120,7 +120,7 @@ class Run:
                 if not line:
                     break
                 feed = Feed()
-                Dict.update(feed, JSONL.loads(line.strip()))
+                Helpers.update(feed, JSONL.loads(line.strip()))
                 txt = cls.display(vars(feed))
                 if not Run.got(txt, feed):
                     Clients.announce(txt)
@@ -132,12 +132,10 @@ class Run:
         "retry all failed feeds."
         counter = 0
         for fnm, fed in Locater.find("rss"):
-            feed = Rss()
-            Dict.update(feed, fed)
-            print(feed)
-            if feed.skip:
-                feed.skip = False
-                Disk.write(feed, fnm)
+            if fed.get("skip", False):
+                fed["error"] = ""
+                fed["skip"] = False
+                Disk.write(fed, fnm)
                 counter += 1
                 if counter >= 10:
                     break
@@ -145,25 +143,21 @@ class Run:
         return counter
 
     @classmethod
-    def display(cls, obj, name=None):
+    def display(cls, dct, name=None):
         "display feed."
         displaylist = ""
-        try:
-            obj = vars(obj)
-        except TypeError:
-            pass
-        if name in obj:
-            result = f"[{obj.name}] "
+        if name in dct:
+            result = f"[{dct['name']} "
         else:
             result = ""
         try:
-            displaylist = obj.get("display_list", "title,link")
+            displaylist = dct.get("display_list", "title,link")
         except AttributeError:
             displaylist = "title,link,author"
         for key in displaylist.split(","):
             if not key:
                 continue
-            data = obj.get(key, None)
+            data = dct.get(key, None)
             if not data:
                 continue
             stripped = Fetcher.striphtml(data.replace("\n", " ").rstrip())
@@ -188,9 +182,9 @@ class Run:
     def got(cls, text, feed):
         "verify whether text has already been seen."
         md5 = MD5.source(text)[:7]
-        if md5 in feed.seen:
+        if md5 in feed.get("seen", ""):
             return True
-        feed.seen.insert(0, md5)
+        feed["seen"].insert(0, md5)
         return False
 
     @classmethod
@@ -206,11 +200,9 @@ class Run:
             logger.debug("next!")
             return 0
         for fnm, fed in Locater.find("rss"):
-            feed = Rss()
-            Dict.update(feed, fed)
-            if feed.skip:
+            if fed.get("skip", False):
                 continue
-            Pool.put((fnm, feed, silent))
+            Pool.put((fnm, fed, silent))
             nrs += 1
         return nrs
 
@@ -278,25 +270,28 @@ class Fetching(Runner):
 
     def fetch(self, fnm, feed):
         "fetch a feed."
+        rss = feed.get("rss", None)
+        if not rss:
+            return
         errr = None
         try:
-            return Fetcher.geturl(feed.rss)
+            return Fetcher.geturl(rss)
         except (ConnectionResetError, RemoteDisconnected, TimeoutError) as ex:
             errr = ex
         except (SSLError, HTTPError, URLError) as ex:
             errr = ex
-        error = Data()
-        Dict.update(error, vars(errr))
-        error.type = str(type(errr))
-        if error.code == 304:
-            logger.debug("%s %s", feed.rss, error.code)
+        error = {}
+        error.update(vars(errr))
+        error["type"] = str(type(errr))
+        if error.get("code", 600) == 304:
+            logger.debug("%s %s", feed["rss"], error["code"])
             return
-        feed.status = error.code or error.errno or error.status or 0
-        feed.error = str(error.msg or error.reason) or "none"
+        feed["status"] = error.get("code", error.get("errno", error.get("status", 0)))
+        feed["error"] = str(error.get("msg", error.get("reason", "none")))
         if self.doskip(error):
-            feed.skip = True
+            feed["skip"] = True
             Disk.write(feed, fnm)
-        logger.debug("%s %s %s", feed.rss, feed.status, feed.error)
+        logger.debug("%s %s %s", feed["rss"], feed["status"], feed["error"])
 
     def getfeed(self, fnm, feed):
         "fetch a feed."
@@ -304,8 +299,8 @@ class Fetching(Runner):
         if not data:
             return []
         return RSS.parse(data,
-                         (feed.rss.endswith("atom") and "entry") or "item",
-                         feed.display_list
+                         (feed.get("rss", "").endswith("atom") and "entry") or "item",
+                         feed.get("display_list", "")
                         ) or []
 
     def run(self, *args, **kwargs):
@@ -314,27 +309,25 @@ class Fetching(Runner):
         fnm, feed, silent = args
         has = False
         gotcha = 0
-        for obj in self.getfeed(fnm, feed):
-            fed = Feed()
-            Dict.update(fed, obj)
-            Dict.update(fed, feed)
+        for dct in self.getfeed(fnm, feed):
+            dct.update(feed)
             counter += 1
-            if obj is None:
+            if dct is None:
                 continue
-            if Method.isempty(fed):
+            if Helpers.isempty(dct):
                 continue
             if Config.save:
-                Run.log(JSON.dumps(fed))
+                Run.log(JSON.dumps(dct))
             if not silent:
-                txt = Run.display(vars(fed))
-                if not Run.got(txt, feed):
+                txt = Run.display(dct)
+                if not Run.got(txt, dct):
                     Clients.announce(txt)
                     gotcha += 1
                     has = True
-            del obj
+            del dct
         if has:
-            logger.debug("fetched %s (%s)", feed.rss, gotcha)
-            feed.seen = feed.seen[:counter]
+            logger.debug("fetched %s (%s)", feed.get("rss", "none"), gotcha)
+            feed["seen"] = feed["seen"][:counter]
             Disk.write(feed, fnm)
         if counter:
             gc.collect(0)
@@ -511,9 +504,7 @@ def atr(msg):
         msg.iface("<stringinurl>")
         return
     for feed in Locater.objects("rss", {'rss': msg.rest}):
-        fed = Rss()
-        Dict.update(fed, feed)
-        url = fed.rss
+        url = feed.get("rss", None)
         if not url:
             continue
         data = Fetcher.geturl(url)
@@ -541,14 +532,12 @@ def dpl(msg):
     else:
         setter = None
     for fnm, feed in Locater.find("rss", {"rss": msg.args[0]}):
-        fed = Rss()
-        Dict.update(fed, feed)
-        if fed:
+        if feed:
             if setter is None:
-                msg.reply(fed.display_list)
+                msg.reply(feed.get("display_list", "none"))
                 return
-            Dict.update(fed, setter)
-            Disk.write(fed, fnm)
+            feed.update(setter)
+            Disk.write(feed, fnm)
     msg.ok()
 
 
@@ -556,10 +545,10 @@ def exp(msg):
     "export opml."
     with Locks.importlock:
         msg.reply(TEMPLATE)
-        for nrs, obj in enumerate(Locater.objects("rss")):
+        for nrs, dct in enumerate(Locater.objects("rss")):
             name = f"url{nrs}"
-            dipl = obj["display_list"]
-            url = obj["rss"]
+            dipl = dct["display_list"]
+            url = dct["rss"]
             txt = f'<outline name="{name}" display_list="{dipl}" xmlUrl="{url}"/>'
             msg.reply(" " * 12 + txt)
         msg.reply(" " * 8 + "</outline>")
@@ -584,10 +573,8 @@ def imp(msg):
         nrskip = 0
         insertid = Utils.shortid()
         skipped = []
-        for obj in prs.parse(txt, "outline", "name,xmlUrl"):
-            feed = Rss()
-            Dict.update(feed, obj)
-            url = obj["xmlUrl"]
+        for feed in prs.parse(txt, "outline", "name,xmlUrl"):
+            url = feed.get("xmlUrl", None)
             if url in skipped:
                 continue
             if not url.startswith("http"):
@@ -597,14 +584,12 @@ def imp(msg):
                 skipped.append(url)
                 nrskip += 1
                 continue
-            feed = Rss()
-            feed.rss = obj["xmlUrl"]
-            del obj["xmlUrl"]
-            Dict.update(feed, obj)
-            uri = urllib.parse.urlparse(feed["rss"])
-            feed.name = str(max(uri.netloc.split("."), key=len))
-            feed.insertid = insertid
-            Disk.write(feed)
+            feed["rss"] = feed["xmlUrl"]
+            del feed["xmlUrl"]
+            uri = urllib.parse.urlparse(url)
+            feed["name"] = str(max(uri.netloc.split("."), key=len))
+            feed["insertid"] = insertid
+            Disk.write(feed, Disk.ident(Rss))
             nrs += 1
     if nrskip:
         msg.reply(f"skipped {nrskip} urls.")
@@ -680,9 +665,9 @@ def rss(msg):
         if result:
             msg.reply(f"{url} is known")
             return
-    feed = Rss()
-    feed.rss = msg.args[0]
-    Disk.write(feed)
+    data = {}
+    data["rss"] = msg.args[0]
+    Disk.write(data, Disk.ident(Rss))
     msg.ok()
 
 
