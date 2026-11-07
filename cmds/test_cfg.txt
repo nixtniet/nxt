@@ -10,7 +10,7 @@
 ['cfg <main,irc,rss>']
 
 >>> cmd("cfg main")
-['level="warning" name="nixt"']
+['level="warning" name="nixt" path="mods,extra"']
 
 >>> cmd("cfg rss")
 ['polltime=300 save=False']

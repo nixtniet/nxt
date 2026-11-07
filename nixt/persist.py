@@ -233,6 +233,8 @@ class Stated:
         "dump state to disk."
         if not self.fnm:
             self.fnm, _x = Locater.first(Method.fqn(self))
+        if not self.fnm:
+            self.fnm = Disk.ident(self)
         Disk.write(vars(self), self.fnm)
 
     def load(self):
