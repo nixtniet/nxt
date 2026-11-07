@@ -212,6 +212,7 @@ class Method:
 
     @classmethod
     def typed(cls, obj, key, value):
+        "set typed values on the object."
         try:
             obj = vars(obj)
         except TypeError:

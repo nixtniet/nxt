@@ -9,7 +9,7 @@ import inspect
 
 from .clients import Clients
 from .message import Message
-from .methods import Dict, Method
+from .methods import Method
 from .package import Mods
 from .utility import Utils
 
