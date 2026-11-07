@@ -11,24 +11,19 @@ import os.path
 from .typings import MethodType
 
 
-class Helpers:
+class Dict:
 
     "yeah"
 
     @classmethod
-    def clz(cls, obj):
-        "return class name of an object."
-        return cls.fqn(obj).split(".")[-1]
-
-    @classmethod
-    def deleted(cls, obj):
+    def deleted(cls, dct):
         "check whether obj had deleted flag set."
-        return "__deleted__" in dir(obj) and obj.__deleted__
+        return "__deleted__" in dct and dct["__deleted__"]
 
     @classmethod
     def edit(
         cls,
-        obj,
+        dct,
         setter=None,
         skip=False
         ):
@@ -38,7 +33,7 @@ class Helpers:
         for key, val in setter.items():
             if skip and val == "":
                 continue
-            cls.typed(obj, key, val)
+            cls.typed(dct, key, val)
 
     @classmethod
     def fmt(
@@ -80,39 +75,18 @@ class Helpers:
         return txt.strip()
 
     @classmethod
-    def fqn(cls, obj):
-        "full qualified name."
-        if "__qualname__" in dir(obj):
-            kin = obj.__qualname__
-        else:
-            kin = str(type(obj)).split()[-1][1:-2]
-        if kin == "type":
-            kin = f"{obj.__module__}.{obj.__name__}"
-        return kin
-
-    @classmethod
     def isempty(cls, dct):
         "check if all keys heve empty value."
         return all(not dct.get(key) for key in dct)
 
     @classmethod
-    def modname(cls, obj):
-        "return package name of an object."
-        return obj.__module__.split(".")[-1]
-
-    @classmethod
-    def notset(cls, obj, obj2):
+    def notset(cls, dct1, dct2):
         "only set if not set."
-        for key, value in obj2.items():
-            if obj.get(key, False):
+        for key, value in dct2.items():
+            if dct1.get(key, False):
                 continue
             if value:
-                setattr(obj, key, value)
-
-    @classmethod
-    def pkgname(cls, obj):
-        "return package name of an object."
-        return obj.__module__.split(".", maxsplit=1)[0]
+                dct1[key] = value
 
     @classmethod
     def search(
@@ -156,14 +130,6 @@ class Helpers:
             res[key] = value
         return res
 
-    @classmethod
-    def todict(cls, obj):
-        res = {}
-        for key in dir(obj):
-            if key.startswith("_"):
-                continue
-            res[key] = getattr(obj, key)
-        return res
 
     @classmethod
     def typed(cls, dct, key, val):
@@ -188,6 +154,44 @@ class Helpers:
             pass
         dct[key] = val
 
+
+class Method:
+
+    @classmethod
+    def clz(cls, obj):
+        "return class name of an object."
+        return cls.fqn(obj).split(".")[-1]
+
+    @classmethod
+    def fqn(cls, obj):
+        "full qualified name."
+        if "__qualname__" in dir(obj):
+            kin = obj.__qualname__
+        else:
+            kin = str(type(obj)).split()[-1][1:-2]
+        if kin == "type":
+            kin = f"{obj.__module__}.{obj.__name__}"
+        return kin
+
+    @classmethod
+    def modname(cls, obj):
+        "return package name of an object."
+        return obj.__module__.split(".")[-1]
+
+    @classmethod
+    def pkgname(cls, obj):
+        "return package name of an object."
+        return obj.__module__.split(".", maxsplit=1)[0]
+
+    @classmethod
+    def todict(cls, obj):
+        res = {}
+        for key in dir(obj):
+            if key.startswith("_"):
+                continue
+            res[key] = getattr(obj, key)
+        return res
+
     @classmethod
     def update(cls, obj, data):
         for key, value in data.items():
@@ -201,5 +205,6 @@ class Helpers:
 
 def __dir__():
     return (
-        'Helpers',
+        'Dict',
+        'Method'
     )

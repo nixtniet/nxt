@@ -13,7 +13,7 @@ from datetime import datetime
 
 
 from .encoder import JSON
-from .helpers import Helpers
+from .methods import Dict, Method
 from .typings import MappingProxyType
 from .utility import Log, Path, RLock, Utils
 
@@ -68,7 +68,7 @@ class Disk:
     def ident(cls, clz):
         "return ident string for object."
         
-        return os.path.join(Helper.fqn(clz), *str(datetime.now(tz=None)).split())
+        return os.path.join(Method.fqn(clz), *str(datetime.now(tz=None)).split())
 
     @classmethod
     def read(cls, path, base="store"):
@@ -138,9 +138,9 @@ class Locater:
             if not dct:
                 dct = Disk.read(pth)
                 Cache.add(pth, dct)
-            if not removed and Helpers.deleted(dct):
+            if not removed and Dict.deleted(dct):
                 continue
-            if selector and not Helpers.search(dct, selector, matching):
+            if selector and not Dict.search(dct, selector, matching):
                 continue
             if nritems and nrs >= nritems:
                 break
@@ -235,14 +235,15 @@ class Stated:
     def dump(self):
         "dump state to disk."
         if not self.fnm:
-            self.fnm, _x = Locater.first(Helpers.fqn(self))
+            self.fnm, _x = Locater.first(Method.fqn(self))
         Disk.write(vars(self), self.fnm)
 
     def load(self):
         "load from disk."
-        path, dct = Locater.first(Helpers.fqn(self))
+        path, dct = Locater.first(Method.fqn(self))
         if dct:
-            Helpers.update(self, dct)
+            Method.update(self, dct)
+
 
 class Workdir:
 

@@ -7,7 +7,7 @@
 import os
 
 
-from .helpers import Helpers
+from .methods import Method
 from .utility import MD5, Log, Utils
 
 
@@ -86,7 +86,7 @@ class Mods:
     @classmethod
     def moddir(cls, name="modules"):
         "return package modules path."
-        return os.path.join(Helpers.where(Mods), name)
+        return os.path.join(Method.where(Mods), name)
 
     @classmethod
     def statics(cls):

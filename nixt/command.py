@@ -8,12 +8,11 @@ import inspect
 
 
 from .clients import Clients
-from .helpers import Helpers
 from .message import Message
+from .methods import Dict
 from .objects import Data
 from .package import Mods
 from .utility import Utils
-
 
 class Commands:
 
@@ -158,16 +157,16 @@ class Parser:
                 continue
             if "-=" in spli:
                 key, value = spli.split("-=", maxsplit=1)
-                Helpers.typed(dct["silent"], key, value)
-                Helpers.typed(dct["gets"], key, value)
+                Dict.typed(dct["silent"], key, value)
+                Dict.typed(dct["gets"], key, value)
                 continue
             if "==" in spli:
                 key, value = spli.split("==", maxsplit=1)
-                Helpers.typed(dct["gets"], key, value)
+                Dict.typed(dct["gets"], key, value)
                 continue
             if "=" in spli:
                 key, value = spli.split("=", maxsplit=1)
-                Helpers.typed(dct["sets"], key, value)
+                Dict.typed(dct["sets"], key, value)
                 continue
             nr += 1
             if nr == 0:

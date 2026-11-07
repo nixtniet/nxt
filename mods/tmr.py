@@ -8,7 +8,7 @@ import random
 import time
 
 
-from nixt.defines import Broker, Disk, Event, Helpers, Locater, Log
+from nixt.defines import Broker, Disk, Event, Locater, Log, Method
 from nixt.defines import Object, RLock, Task, Time
 
 
@@ -109,5 +109,5 @@ def tmr(msg):
     diff = todo - time.time()
     txt = " ".join(msg.args[1:])
     bot = Broker.get(msg.orig)
-    TimerLoop.add(todo, Helpers.fqn(bot), msg.channel, txt)
+    TimerLoop.add(todo, Method.fqn(bot), msg.channel, txt)
     msg.ok(Time.elapsed(diff))

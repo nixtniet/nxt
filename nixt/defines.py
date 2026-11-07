@@ -12,7 +12,7 @@ from .daemons import Daemon
 from .encoder import JSON, JSONL
 from .excepts import Errors
 from .handler import Handler
-from .helpers import Helpers
+from .methods import Dict, Method
 from .looping import Loop
 from .message import Message
 from .objects import Data, Object
@@ -42,6 +42,7 @@ __all__ = (
     'Config',
     'Daemon',
     'Data',
+    'Dict',
     'Disk',
     'Display',
     'Errors',
@@ -55,6 +56,7 @@ __all__ = (
     'Loop',
     'Main',
     'Message',
+    'Method',
     'Mods',
     'Object',
     'Output',
