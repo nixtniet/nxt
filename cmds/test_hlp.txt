@@ -1,0 +1,11 @@
+# This file is placed in the Public Domain.
+# doctest: +ELLIPSIS
+
+
+"plugins"
+
+
+>>> from nixt.defines import cmd
+
+>>> cmd("hlp")
+['usage: nixt [options] [cmd] [key=val] [key==val] [key-=val] [arguments]\n\nNIXT\n\noptions:\n  -h, --help         show this help message and exit\n  -c, --console      start a console.\n  -d, --daemon       run as background daemon.\n  -s, --service      run as service.\n\n  -a, --all          load all modules.\n  -l, --level level  set loglevel.\n  -v, --verbose      enable verbose.\n  -w, --wait         wait for services to start.\n\n  -m, --mods m1,m2   modules to load.\n  -p, --path path    path to modules directory.\n\n  --admin            enable admin mode.\n  --scanner          do full modules scan on boot.\n  --wdr WDR          set modules directory.\n\nuse "nixbot cmd" for a list of commands.\n']

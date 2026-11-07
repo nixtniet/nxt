@@ -1,0 +1,15 @@
+# This file is placed in the Public Domain.
+# doctest: +ELLIPSIS
+
+
+"plugins"
+
+
+>>> from nixt.defines import Boot, cmd
+>>> Boot.configure(".test")
+
+>>> cmd("pwd")
+['pwd <nick> <password>']
+
+>>> cmd("pwd bla mekker")
+['AGJsYQBtZWtrZXI=']

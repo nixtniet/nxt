@@ -1,0 +1,11 @@
+# This file is placed in the Public Domain.
+# doctest: +ELLIPSIS
+
+
+"request to the prosecutor"
+
+
+>>> from nixt.defines import cmd
+
+>>> cmd("req")
+['| **Information and Evidence Unit**\n| **Office of the Prosecutor**\n| **Post Office Box 19519**\n| **2500 CM The Hague**\n| **The Netherlands**\n|\n\n\nHello Office of the Prosecutor,\n\ni write you in the context of communications and claims under art.15 of\nthe Rome Statute. i want to inform the prosecutor that the king of the\nnetherlands and his government are commiting 3 of the 5 crimes defined\nin the Rome Statute.\n\nThe dutch government has introduced three new forced care laws, the Wfz\n(wet forensische zorg) for criminals, the WvGGZ (Wet verplichte GGZ) for\nthe disturbed and addicted and the Wzd (Wet zorg en dwang) for the\nhandicapped.\n\nBoth the chamber suggesting these laws to the king and the king himself\nhave been informed about the fact the the substances administered under\nthese laws are proven to be poison (1).\n\nThere is proof the medication used in forced treatments in the\nnetherlands are poison.\n\n1) haloperidol\n\nhttps://echa.europa.eu/substance-information/-/substanceinfo/100.000.142\n\n2) clozapine\n\nhttps://echa.europa.eu/substance-information/-/substanceinfo/100.024.831\n\n3) olanzapine\n\nhttps://echa.europa.eu/substance-information/-/substanceinfo/100.125.320\n\n4) aripriprazole\n\nhttps://echa.europa.eu/substance-information/-/substanceinfo/100.112.532\n\n\nWith the mass scale torture with poison the king of the netherlands and\nhis chamber:\n\n(1) kills\n(2) does grave bodily and mental harm\n(3) makes impotent\n\non the following victim groups here in the Netherlands:\n\n(1) verslaafden (addicts)\n(2) bejaarden (elderly)\n(3) ggz patienten (psychiatric patients)\n(4) criminelen (criminials)\n(5) gehandicapten (handicapped)\n\nSince the members of the chamber and the king were aware that these\nmedicine are poison at the time they voted for this law and the day the\nWfz law took effect (1-1-2019), i ask the prosecutor to prosecute the\nking for making the commiting of the above mentioned crimes (killing,\ntorture and impotent making) possible.']

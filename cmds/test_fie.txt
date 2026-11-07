@@ -1,0 +1,20 @@
+# This file is placed in the Public Domain.
+# doctest: +ELLIPSIS
+
+
+"plugins"
+
+
+>>> from nixt.defines import cmd
+
+>>> cmd("log test")
+['ok']
+
+>>> cmd("fie")
+['log,rss']
+
+>>> cmd("fie test")
+['no attributes']
+
+>>> cmd("fie log")
+['txt']

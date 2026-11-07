@@ -1,0 +1,25 @@
+# This file is placed in the Public Domain.
+# doctest: +ELLIPSIS
+
+
+"plugins"
+
+
+>>> from nixt.defines import Boot, cmd
+
+>>> res = cmd("rss http://hnrss.org/newest")
+
+>>> cmd("atr")
+['atr <stringinurl>']
+
+# >>> cmd("atr hnrss")
+# ['title,description,pubDate,link,dc:creator,comments,guid']
+
+>>> cmd('dpl')
+['dpl <stringinurl> [<item1,item2>]']
+
+>>> cmd("dpl hnrss title,link")
+['ok']
+
+>> cmd("dpl hnrss")
+['title,link']

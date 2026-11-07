@@ -1,0 +1,16 @@
+# This file is placed in the Public Domain.
+# doctest: +ELLIPSIS
+
+
+"brokers"
+
+
+>>> from nixt.defines import Broker, Object
+>>> o = Object()
+>>> o.a = "b"
+>>> Broker.add(o)
+>>> obj = Broker.get(repr(o))
+>>> repr(obj) # doctest: +ELLIPSIS
+'<nixt.objects.Object object at ...>'
+>>> repr(o) == repr(obj)
+True

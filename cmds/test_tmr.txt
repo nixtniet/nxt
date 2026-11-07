@@ -1,0 +1,11 @@
+# This file is placed in the Public Domain.
+# doctest: +ELLIPSIS
+
+
+"plugins"
+
+
+>>> from nixt.defines import cmd
+
+>>> cmd("tmr")
+['tmr <date> <txt>']

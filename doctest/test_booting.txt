@@ -1,0 +1,11 @@
+# This file is placed in the Public Domain.
+# doctest: +ELLIPSIS
+
+
+"brokers"
+
+
+>>> from nixt.defines import Boot
+>>> boot = Boot()
+>>> boot
+<nixt.booting.Boot object at ...>

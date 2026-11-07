@@ -1,0 +1,14 @@
+# This file is placed in the Public Domain.
+# doctest: +ELLIPSIS
+
+
+"plugins"
+
+
+>>> from nixt.defines import cmd
+
+>>> cmd("lou")
+['no bot in fleet.']
+
+>>> cmd("sil")
+['no bot in fleet.']

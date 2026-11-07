@@ -1,0 +1,18 @@
+# This file is placed in the Public Domain.
+# doctest: +ELLIPSIS
+
+
+"plugins"
+
+
+>>> from nixt.defines import Display, cmd
+
+>>> cmd("flt")
+['no clients']
+
+>>> dpl = Display()
+>>> cmd("flt")
+['Display']
+
+>>> cmd("flt 0")
+['<nixt.clients.Display object at ...']

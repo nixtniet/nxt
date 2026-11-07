@@ -1,0 +1,18 @@
+# This file is placed in the Public Domain.
+
+
+"precursor"
+
+
+>>> import os, shutil, sys
+>>> sys.path.insert(0, os.getcwd())
+>>> from nixt.defines import Boot, Commands, Main, Workdir, cmd
+>>> Main.path = "mods,extra"
+>>> Workdir.wdr  = ".test"
+>>> if os.path.exists(".test"): shutil.rmtree(".test")
+>>> Boot.boot()
+>>> Commands.scanner()
+>>> cmd("log txt1")
+['ok']
+>>> cmd("rss http://hnrss.org/newest")
+['ok']

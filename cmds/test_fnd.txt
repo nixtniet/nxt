@@ -1,0 +1,15 @@
+# This file is placed in the Public Domain.
+# doctest: +ELLIPSIS
+
+
+"plugins"
+
+
+>>> from nixt.defines import Boot, cmd
+
+>>> cmd("fnd")
+['log,rss']
+
+>>> res = cmd("fnd log")
+>>> res[0]
+'0 txt="txt1" ...'

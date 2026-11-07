@@ -1,0 +1,14 @@
+# This file is placed in the Public Domain.
+# doctest: +ELLIPSIS
+
+
+"plugins"
+
+
+>>> from nixt.defines import cmd
+
+>>> cmd('dis')
+['... cancer ... (11m9s) | hart ... (14m21s) | mental ... (44m59s) | breathing ... (50m2s) | externals ... (58m12s) | https://otpcr.github.io']
+
+>>> cmd('now')
+['... MENTAL (.../32/11684) every 44m59s']

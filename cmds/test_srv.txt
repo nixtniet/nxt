@@ -1,0 +1,13 @@
+# This file is placed in the Public Domain.
+# doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+
+
+"plugins"
+
+
+>>> from nixt.require import Cmd
+>>> from nixt.defines import Commands, Main, cmd
+>>> Main.admin = True
+>>> Commands.add(Cmd.srv)
+>>> cmd("srv --admin")
+['[Unit]\nDescription=NIXT\nAfter=multi-user.target\n\n[Service]\nType=simple\nUser=...\nGroup=...\nExecStart=.../.local/bin/nixt -s\n\n[Install]\nWantedBy=multi-user.target']
