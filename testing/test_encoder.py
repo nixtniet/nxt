@@ -8,7 +8,7 @@
 import unittest
 
 
-from nixt.defines import Dict, Object, JSON
+from nixt.defines import Method, Object, JSON
 
 
 VALIDJSON = '{"test": "bla"}'
@@ -76,5 +76,5 @@ class TestTypes(unittest.TestCase):
         ooo = Object()
         ooo.a = "b"
         obj = Object()
-        Dict.update(obj, JSON.loads(JSON.dumps(ooo)))
+        Method.update(obj, JSON.loads(JSON.dumps(ooo)))
         self.assertTrue(getattr(obj, "a", False))

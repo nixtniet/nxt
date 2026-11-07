@@ -69,7 +69,7 @@ class Dict:
             elif isinstance(value, str):
                 txt += f'{key}="{value}" '
             else:
-                txt += f"{key}={cls.clz(value)}({value!s}) "
+                txt += f"{key}={Method.clz(value)}({value!s}) "
         if txt == "":
             txt = "{}"
         return txt.strip()
@@ -157,6 +157,8 @@ class Dict:
 
 class Method:
 
+    "methods"
+
     @classmethod
     def clz(cls, obj):
         "return class name of an object."
@@ -185,6 +187,7 @@ class Method:
 
     @classmethod
     def todict(cls, obj):
+        "convert object to dictionary."
         res = {}
         for key in dir(obj):
             if key.startswith("_"):
@@ -194,6 +197,7 @@ class Method:
 
     @classmethod
     def update(cls, obj, data):
+        "update object with a dict."
         for key, value in data.items():
             setattr(obj, key, value)
 

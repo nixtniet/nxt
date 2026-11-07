@@ -10,9 +10,9 @@ import inspect
 from .clients import Clients
 from .message import Message
 from .methods import Dict
-from .objects import Data
 from .package import Mods
 from .utility import Utils
+
 
 class Commands:
 

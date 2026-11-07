@@ -270,12 +270,12 @@ class Fetching(Runner):
 
     def fetch(self, fnm, feed):
         "fetch a feed."
-        rss = feed.get("rss", None)
-        if not rss:
+        url = feed.get("rss", None)
+        if not url:
             return
         errr = None
         try:
-            return Fetcher.geturl(rss)
+            return Fetcher.geturl(url)
         except (ConnectionResetError, RemoteDisconnected, TimeoutError) as ex:
             errr = ex
         except (SSLError, HTTPError, URLError) as ex:
@@ -512,7 +512,7 @@ def atr(msg):
             continue
         result = list(RSS.getitems(
                                    data,
-                                   (fed.rss.endswith("atom") and "entry") or "item",
+                                   (feed.get("rss", "").endswith("atom") and "entry") or "item",
                                    1
                                   ))
         resulting = []
@@ -547,7 +547,7 @@ def exp(msg):
         msg.reply(TEMPLATE)
         for nrs, dct in enumerate(Locater.objects("rss")):
             name = f"url{nrs}"
-            dipl = dct["display_list"]
+            dipl = dct.get("display_list", "title,link")
             url = dct["rss"]
             txt = f'<outline name="{name}" display_list="{dipl}" xmlUrl="{url}"/>'
             msg.reply(" " * 12 + txt)

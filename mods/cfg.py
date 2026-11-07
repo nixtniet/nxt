@@ -4,7 +4,7 @@
 "configuration"
 
 
-from nixt.defines import Dict, Disk, Main, Mods
+from nixt.defines import Dict, Disk, Main, Method, Mods
 
 
 def cfg(msg):
@@ -36,6 +36,8 @@ def cfg(msg):
             )
         )
         return
-    Dict.edit(vars(config), msg.sets)
+    dct = {}
+    Dict.edit(dct, msg.sets)
+    Method.update(config, dct)
     Disk.write(vars(config), name, "config")
     msg.ok()

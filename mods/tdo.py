@@ -25,7 +25,7 @@ def dne(msg):
     nmr = 0
     for fnm, dct in Locater.find('todo', selector):
         dct["__deleted_"] = True
-        Disk.write(todo, fnm)
+        Disk.write(dct, fnm)
         msg.ok()
         break
     if not nmr:

@@ -15,7 +15,7 @@ import time
 sys.path.insert(0, os.getcwd())
 
 
-from nixt.defines import Boot, Commands, Main, Message, Method, Parser
+from nixt.defines import Boot, Commands, Dict, Main, Message, Method, Parser
 from nixt.defines import Mods, Pool, Screen, Task, Time, Workdir
 
 
@@ -75,7 +75,7 @@ class Kernel(Boot):
         endtime = time.time()
         lap = Time.elapsed(endtime-Kernel.starttime)
         percall = (endtime-Kernel.starttime)/total
-        print(f"{Method.fmt(Main, skip='otxt,txt')}")
+        print(f"{Dict.fmt(vars(Main), skip='otxt,txt')}")
         print(f"nrcpu: {Pool.nrcpu} events: {total}")
         print(f"total: {lap} nrs: {Kernel.nrevents} call: {percall}")
         print(threading.enumerate())
@@ -132,7 +132,9 @@ class Kernel(Boot):
 
 def main():
     "main code."
-    Parser.parse(Main, " ".join(sys.argv[1:]))
+    dct = {}
+    Parser.parse(dct, " ".join(sys.argv[1:]))
+    Method.update(Main, dct)
     Kernel.boot()
     Kernel.launch()
     Kernel.collect()

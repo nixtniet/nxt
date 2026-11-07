@@ -67,7 +67,6 @@ class Disk:
     @classmethod
     def ident(cls, clz):
         "return ident string for object."
-        
         return os.path.join(Method.fqn(clz), *str(datetime.now(tz=None)).split())
 
     @classmethod
@@ -146,7 +145,6 @@ class Locater:
                 break
             nrs += 1
             yield (pth, dct)
-        return (None, None)
 
     @classmethod
     def first(cls, kind, selector=None):
@@ -195,7 +193,6 @@ class Locater:
             cls.find(kind, selector),
             key=lambda x: cls.fntime(x[0])
         )
-        res = ""
         if result:
             return result[-1]
         return (None, None)
@@ -240,7 +237,7 @@ class Stated:
 
     def load(self):
         "load from disk."
-        path, dct = Locater.first(Method.fqn(self))
+        _path, dct = Locater.first(Method.fqn(self))
         if dct:
             Method.update(self, dct)
 

@@ -49,7 +49,6 @@ __all__ = (
     'Event',
     'Format',
     'Handler',
-    'Helpers',
     'Locater',
     'Log',
     'Logging',

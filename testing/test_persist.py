@@ -9,7 +9,7 @@ import os
 import unittest
 
 
-from nixt.defines import Disk, Main, Locater, Method, Workdir
+from nixt.defines import Dict, Disk, Main, Locater, Workdir
 from nixt.persist import Cache
 
 
@@ -38,7 +38,7 @@ class TestDisk(unittest.TestCase):
     def test_loadcfg(self):
         "test loading from disk."
         Main.a = "b"
-        Disk.write(Method.skip(Main), "main", "config")
+        Disk.write(Dict.skip(vars(Main)), "main", "config")
         cfg = Disk.read("main", "config")
         self.assertEqual(cfg.get("a", None), "b")
 
@@ -51,7 +51,7 @@ class TestDisk(unittest.TestCase):
     def test_writecfg(self):
         "test writing config to disk."
         Main.a = "b"
-        Disk.write(Method.skip(Main), "main", "config")
+        Disk.write(Dict.skip(vars(Main)), "main", "config")
         self.assertTrue(os.path.exists(os.path.join(Workdir.wdr, "config", "main")))
 
 

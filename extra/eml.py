@@ -77,7 +77,7 @@ def mbx(msg):
         for mail in thing:
             dct = {}
             dct.update(mail)
-            dct.update(tmp._headers)
+            dct.update(mail.get("_headers", {}))
             for payload in mail.walk():
                 if payload.get_content_type() == 'text/plain':
                     load =  payload.get_payload()
