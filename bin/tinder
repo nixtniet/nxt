@@ -132,9 +132,7 @@ class Kernel(Boot):
 
 def main():
     "main code."
-    dct = {}
-    Parser.parse(dct, " ".join(sys.argv[1:]))
-    Method.update(Main, dct)
+    Parser.parse(Main, " ".join(sys.argv[1:]))
     Kernel.boot()
     Kernel.launch()
     Kernel.collect()

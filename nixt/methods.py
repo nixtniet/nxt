@@ -159,6 +159,13 @@ class Method:
     "methods"
 
     @classmethod
+    def clsname(cls, obj):
+        "class name of an object."
+        if "__self__" in dir(obj):
+            return obj.__self__.__class__.__name__
+        return obj.__class__.__name__
+
+    @classmethod
     def clz(cls, obj):
         "return class name of an object."
         return cls.fqn(obj).split(".")[-1]
@@ -173,6 +180,15 @@ class Method:
         if kin == "type":
             kin = f"{obj.__module__}.{obj.__name__}"
         return kin
+
+    @classmethod
+    def getname(cls, obj):
+        "string of function/method."
+        if inspect.ismethod(obj):
+            return f"{cls.clsname(obj)}.{obj.__name__}"
+        if inspect.isfunction(obj):
+            return repr(obj).split()[1]
+        return repr(obj)
 
     @classmethod
     def modname(cls, obj):
@@ -193,6 +209,14 @@ class Method:
                 continue
             res[key] = getattr(obj, key)
         return res
+
+    @classmethod
+    def typed(cls, obj, key, value):
+        try:
+            obj = vars(obj)
+        except TypeError:
+            pass
+        Dict.typed(obj, key, value)
 
     @classmethod
     def update(cls, obj, data):

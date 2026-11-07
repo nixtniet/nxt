@@ -9,6 +9,7 @@ import time
 
 
 from .excepts import Errors
+from .methods import Method
 from .utility import Event, Log, Queue, RLock, Thread
 
 
@@ -25,7 +26,7 @@ class Worker(Thread):
         super().__init__(None, self.run, None, (), daemon=daemon)
         self.name = kwargs.get("name", "")
         if not self.name:
-            self.name = self.getname(func) or ""
+            self.name = Method.getname(func) or ""
         self.queue = Queue()
         self.result = None
         self.sleep = 0.0
@@ -47,22 +48,6 @@ class Worker(Thread):
         except Exception as ex:
             Worker.block.set()
             Errors.throw(ex)
-
-    @classmethod
-    def clsname(cls, obj):
-        "class name of an object."
-        if "__self__" in dir(obj):
-            return obj.__self__.__class__.__name__
-        return obj.__class__.__name__
-
-    @classmethod
-    def getname(cls, obj):
-        "string of function/method."
-        if inspect.ismethod(obj):
-            return f"{cls.clsname(obj)}.{obj.__name__}"
-        if inspect.isfunction(obj):
-            return repr(obj).split()[1]
-        return repr(obj)
 
     def run(self):
         "run function."
